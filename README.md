@@ -1,6 +1,6 @@
 # 🐾 Patitas
 
-Red solidaria para mascotas perdidas en Necochea y Quequén. Un tablón comunitario con mapa para publicar y buscar animales perdidos o encontrados, más placas QR para el collar que enlazan directo al WhatsApp del dueño.
+Red solidaria para mascotas perdidas en cualquier ciudad. Un tablón comunitario con mapa para publicar y buscar animales perdidos o encontrados, más placas QR para el collar que enlazan directo al WhatsApp del dueño.
 
 ## Stack
 
@@ -22,7 +22,7 @@ patitas/
 │   └── store/        # Estado global (funciona con o sin Supabase)
 ├── supabase/
 │   ├── schema.sql    # Tablas, RLS y bucket — para pegar en el SQL Editor
-│   └── seed.sql      # Datos de ejemplo de Necochea/Quequén
+│   └── seed.sql      # Datos de ejemplo repartidos por el mundo
 ├── .env.example      # Plantilla de variables de entorno
 ├── SUPABASE.md       # Cómo conectar Supabase paso a paso
 └── DEPLOY.md         # Cómo publicar en GitHub y Vercel

@@ -19,7 +19,7 @@ Esto crea las tablas `profiles`, `pets`, `reports` y `ads`, habilita Row Level S
 1. En el SQL Editor, abrí otra pestaña nueva.
 2. Pegá el contenido de `supabase/seed.sql` y ejecutalo.
 
-Te deja 6 reportes de ejemplo en Necochea/Quequén para ver cómo se ve el tablón y el mapa. Los podés borrar cuando quieras desde la propia app.
+Te deja 6 reportes de ejemplo repartidos por el mundo para ver cómo se ve el tablón y el mapa. Los podés borrar cuando quieras desde la propia app.
 
 ## 4. Verificá el Storage
 
