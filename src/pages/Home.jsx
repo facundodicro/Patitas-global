@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { MessageCircle, QrCode, UserPlus } from 'lucide-react'
 import { PawMark } from '../components/Logo'
 import BoardSection from '../components/BoardSection'
+import LikeButton from '../components/LikeButton'
 import MapSection from '../components/MapSection'
 import ReportModal from '../components/ReportModal'
 import { listReports, listAds, DEMO_MODE } from '../lib/store'
@@ -110,9 +111,12 @@ export default function Home() {
               </button>
             </div>
             {!loading && (
-              <p className="mt-6 text-sm font-bold text-white/85">
-                {enBusqueda} en búsqueda activa · {reunidas} reunidas · {publicadas} reportes publicados
-              </p>
+              <div className="mt-6 flex flex-wrap items-center gap-4">
+                <p className="text-sm font-bold text-white/85">
+                  {enBusqueda} en búsqueda activa · {reunidas} reunidas · {publicadas} reportes publicados
+                </p>
+                <LikeButton />
+              </div>
             )}
           </div>
 
