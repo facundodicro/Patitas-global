@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { MessageCircle, QrCode, UserPlus } from 'lucide-react'
 import { PawMark } from '../components/Logo'
 import BoardSection from '../components/BoardSection'
+import DonateButton from '../components/DonateButton'
 import LikeButton from '../components/LikeButton'
 import MapSection from '../components/MapSection'
 import ReportModal from '../components/ReportModal'
@@ -109,6 +110,10 @@ export default function Home() {
               >
                 Reportar mascota perdida
               </button>
+              <DonateButton
+                label="Donar"
+                className="border-2 border-white/80 !bg-transparent px-6 py-3 !text-white hover:!bg-white/10"
+              />
             </div>
             {!loading && (
               <div className="mt-6 flex flex-wrap items-center gap-4">
