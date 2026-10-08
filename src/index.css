@@ -58,3 +58,17 @@ body {
 .animate-fade-in {
   animation: fade-in 0.18s ease-out;
 }
+
+/* Halo tenue pulsante para el botón Donar del hero */
+@keyframes donate-glow {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(249, 115, 22, 0.35), 0 0 16px rgba(249, 115, 22, 0.25);
+  }
+  50% {
+    box-shadow: 0 0 0 7px rgba(249, 115, 22, 0), 0 0 28px rgba(249, 115, 22, 0.5);
+  }
+}
+.donate-glow {
+  animation: donate-glow 2.8s ease-in-out infinite;
+}

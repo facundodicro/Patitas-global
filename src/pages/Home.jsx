@@ -112,7 +112,7 @@ export default function Home() {
               </button>
               <DonateButton
                 label="Donar"
-                className="border-2 border-white/80 !bg-transparent px-6 py-3 !text-white hover:!bg-white/10"
+                className="donate-glow border-2 border-white/80 !bg-transparent px-6 py-3 !text-white hover:!bg-white/10"
               />
             </div>
             {!loading && (
