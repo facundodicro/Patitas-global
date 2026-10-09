@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { MessageCircle, QrCode, UserPlus } from 'lucide-react'
+import { MessageCircle, QrCode, Store, UserPlus } from 'lucide-react'
 import { PawMark } from '../components/Logo'
 import BoardSection from '../components/BoardSection'
 import DonateButton from '../components/DonateButton'
@@ -162,28 +162,43 @@ export default function Home() {
         </div>
       </section>
 
-      {/* COMERCIOS AMIGOS */}
+      {/* PATROCINADOR DESTACADO */}
       {ads.length > 0 && (
         <section className="mx-auto max-w-6xl px-4 py-10">
-          <span className="text-xs font-bold uppercase tracking-wider text-stone-400">Anuncio</span>
-          <div className="mt-3 grid gap-4 md:grid-cols-3">
-            {ads.map((ad) => (
-              <div key={ad.id} className="rounded-2xl border border-stone-200 bg-white p-5 shadow-card">
-                <h3 className="font-extrabold text-stone-900">{ad.titulo}</h3>
-                {ad.descripcion && <p className="mt-1 text-sm text-stone-600">{ad.descripcion}</p>}
-                {ad.whatsapp && (
+          <div className="relative overflow-hidden rounded-3xl bg-white shadow-card">
+            <span className="absolute right-4 top-4 z-10 rounded-full bg-stone-900/70 px-3 py-1 text-[11px] font-extrabold uppercase tracking-wider text-white backdrop-blur">
+              Patrocinado
+            </span>
+            <div className="grid md:grid-cols-2">
+              {ads[0].foto_url ? (
+                <img
+                  src={ads[0].foto_url}
+                  alt={ads[0].titulo}
+                  className="h-56 w-full object-cover md:h-full md:min-h-[280px]"
+                />
+              ) : (
+                <div className="flex h-56 items-center justify-center bg-brand/10 md:h-full md:min-h-[280px]">
+                  <Store className="h-12 w-12 text-brand/40" aria-hidden="true" />
+                </div>
+              )}
+              <div className="flex flex-col justify-center p-6 sm:p-8">
+                <h3 className="text-2xl font-extrabold text-stone-900">{ads[0].titulo}</h3>
+                {ads[0].descripcion && (
+                  <p className="mt-2 text-stone-600">{ads[0].descripcion}</p>
+                )}
+                {ads[0].whatsapp && (
                   <a
-                    href={waLink(ad.whatsapp, `¡Hola! Vi su anuncio en Patitas. (${ad.titulo})`)}
+                    href={waLink(ads[0].whatsapp, `¡Hola! Vi su publicidad en Patitas. (${ads[0].titulo})`)}
                     target="_blank"
                     rel="noreferrer"
-                    className="mt-3 inline-flex items-center gap-2 rounded-full bg-status-encontrado px-4 py-2 text-sm font-extrabold text-white transition hover:brightness-110"
+                    className="mt-4 inline-flex w-fit items-center gap-2 rounded-full bg-[#25D366] px-5 py-2.5 font-extrabold text-white transition hover:brightness-95"
                   >
                     <MessageCircle className="h-4 w-4" />
                     WhatsApp
                   </a>
                 )}
               </div>
-            ))}
+            </div>
           </div>
         </section>
       )}
