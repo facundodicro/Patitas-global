@@ -2,11 +2,11 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 
 /**
- * Palabra animada: cada N segundos las letras entran en cascada
- * (alternando desde abajo y desde arriba) y forman la palabra.
+ * La palabra entra "corriendo" desde la derecha cada N segundos,
+ * se posiciona en su lugar y le queda un halo tenue que la resalta.
  * Solo se usa en el header para no sobrecargar el resto de la app.
  */
-const WORD_CYCLE_MS = 6000
+const WORD_CYCLE_MS = 7000
 
 function AnimatedWord({ text, className = '' }) {
   const [cycle, setCycle] = useState(0)
@@ -16,23 +16,11 @@ function AnimatedWord({ text, className = '' }) {
     return () => clearInterval(id)
   }, [])
 
-  const fromBelow = cycle % 2 === 0
-
   return (
-    <span className={className} role="text" aria-label={text}>
-      {text.split('').map((ch, i) => (
-        <span key={`${cycle}-${i}`} className="letter-mask" aria-hidden="true">
-          <span
-            className="letter-inner"
-            style={{
-              animationName: fromBelow ? 'letter-in-up' : 'letter-in-down',
-              animationDelay: `${i * 55}ms`,
-            }}
-          >
-            {ch}
-          </span>
-        </span>
-      ))}
+    <span className={`word-run-wrap ${className}`} role="text" aria-label={text}>
+      <span key={cycle} className="word-run" aria-hidden="true">
+        {text}
+      </span>
     </span>
   )
 }
