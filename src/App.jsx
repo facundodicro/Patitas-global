@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import Header from './components/Header'
 import Footer from './components/Footer'
+import AdBanner from './components/AdBanner'
 import ProtectedRoute from './components/ProtectedRoute'
 import QrScanner from './components/QrScanner'
 import Home from './pages/Home'
@@ -52,6 +53,7 @@ export default function App() {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>
+      <AdBanner />
       <Footer />
       <QrScanner />
     </div>
