@@ -1,9 +1,9 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { X, AlertTriangle, CheckCircle2, Camera, Loader2 } from 'lucide-react'
-import { createReport, uploadPetPhoto, DEMO_MODE } from '../lib/store'
+import { createReport, updateReport, uploadPetPhoto, DEMO_MODE } from '../lib/store'
 import { useAuth } from '../hooks/useAuth'
 
-export default function ReportModal({ open, onClose, onCreated }) {
+export default function ReportModal({ open, onClose, onCreated, editing = null, onSaved }) {
   const { user } = useAuth()
   const [tipo, setTipo] = useState('perdida')
   const [nombre, setNombre] = useState('')
@@ -19,6 +19,25 @@ export default function ReportModal({ open, onClose, onCreated }) {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
   const fileRef = useRef(null)
+
+  // Al abrir en modo edición, precargar los datos de la publicación
+  useEffect(() => {
+    if (open && editing) {
+      setTipo(editing.tipo === 'encontrada' ? 'encontrada' : 'perdida')
+      setNombre(editing.nombre || '')
+      setEspecie(editing.especie || 'Perro')
+      setRaza(editing.raza || '')
+      setSenas(editing.senas || '')
+      setRecompensa(editing.recompensa || '')
+      setZona(editing.zona || '')
+      setFecha(editing.fecha || '')
+      setTelefono(editing.telefono || '')
+      setFile(null)
+      setPreview(editing.foto_url || null)
+      setError('')
+      setSubmitting(false)
+    }
+  }, [open, editing])
 
   if (!open) return null
 
@@ -48,10 +67,9 @@ export default function ReportModal({ open, onClose, onCreated }) {
     }
     setSubmitting(true)
     try {
-      let foto_url = null
+      let foto_url = editing?.foto_url ?? null
       if (file) foto_url = await uploadPetPhoto(file)
-      const report = await createReport({
-        reporter_id: user?.id ?? null,
+      const data = {
         tipo,
         nombre: nombre.trim(),
         especie,
@@ -62,13 +80,25 @@ export default function ReportModal({ open, onClose, onCreated }) {
         fecha,
         telefono: telefono.trim(),
         foto_url,
-        estado: tipo === 'perdida' ? 'perdida' : 'encontrada',
-      })
-      onCreated?.(report)
-      reset()
+        // Si ya estaba reunida, se mantiene; si no, sigue al tipo elegido
+        estado:
+          editing && editing.estado === 'en_casa'
+            ? 'en_casa'
+            : tipo === 'perdida'
+              ? 'perdida'
+              : 'encontrada',
+      }
+      if (editing) {
+        const updated = await updateReport(editing.id, data)
+        onSaved?.(updated)
+      } else {
+        const report = await createReport({ reporter_id: user?.id ?? null, ...data })
+        onCreated?.(report)
+        reset()
+      }
       onClose()
     } catch (err) {
-      setError(err?.message || 'No se pudo publicar la alerta. Probá de nuevo.')
+      setError(err?.message || 'No se pudo guardar. Probá de nuevo.')
     } finally {
       setSubmitting(false)
     }
@@ -88,7 +118,9 @@ export default function ReportModal({ open, onClose, onCreated }) {
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-extrabold text-stone-900">Publicar alerta</h2>
+          <h2 className="text-xl font-extrabold text-stone-900">
+            {editing ? 'Editar publicación' : 'Publicar alerta'}
+          </h2>
           <button
             type="button"
             onClick={onClose}
@@ -254,7 +286,7 @@ export default function ReportModal({ open, onClose, onCreated }) {
             className="w-full rounded-xl bg-brand hover:bg-brand-light text-white font-extrabold py-3 text-base shadow-card transition disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
             {submitting && <Loader2 className="h-5 w-5 animate-spin" />}
-            {submitting ? 'Publicando…' : 'Publicar alerta'}
+            {submitting ? (editing ? 'Guardando…' : 'Publicando…') : editing ? 'Guardar cambios' : 'Publicar alerta'}
           </button>
 
           {DEMO_MODE && (

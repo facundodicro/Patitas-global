@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Calendar, Check, ChevronDown, ChevronUp, Gift, Home, Map, MapPin, MessageCircle, Phone, Trash2 } from 'lucide-react';
+import { Calendar, Check, ChevronDown, ChevronUp, Gift, Home, Map, MapPin, MessageCircle, Pencil, Phone, Trash2 } from 'lucide-react';
 import Badge from './Badge';
 import PetPhoto from './PetPhoto';
 import { waLink, toWhatsAppNumber } from '../lib/qr';
@@ -14,7 +14,7 @@ function formatFecha(fecha) {
   });
 }
 
-export default function PetCard({ report, onLocate, user, isAdmin, onMarkReunited, onDeleteReport }) {
+export default function PetCard({ report, onLocate, user, isAdmin, onMarkReunited, onDeleteReport, onEditReport }) {
   const [open, setOpen] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -36,7 +36,8 @@ export default function PetCard({ report, onLocate, user, isAdmin, onMarkReunite
   const whatsappText = `¡Hola! Vi tu publicación de ${nombre} en Patitas y creo que puedo ayudarte.`;
 
   // Solo el dueño de la publicación (o un admin) puede gestionarla
-  const canManage = isAdmin || (user && reporter_id && reporter_id === user.id);
+  const isOwner = user && reporter_id && reporter_id === user.id
+  const canManage = isAdmin || isOwner
 
   async function handleReunited() {
     if (!onMarkReunited || busy) return;
@@ -151,13 +152,21 @@ export default function PetCard({ report, onLocate, user, isAdmin, onMarkReunite
             {canManage && (
               <div className="border-t border-stone-100 pt-3">
                 <p className="mb-2 text-xs font-bold uppercase tracking-wide text-stone-400">
-                  Tu publicación
+                  {isOwner ? 'Tu publicación' : 'Moderar publicación'}
                 </p>
                 {actionError && (
                   <p className="mb-2 text-xs font-semibold text-red-600">{actionError}</p>
                 )}
                 {!confirmDelete ? (
                   <div className="flex flex-col gap-2">
+                    <button
+                      type="button"
+                      onClick={() => onEditReport?.(report)}
+                      disabled={busy}
+                      className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-brand px-4 py-2 text-sm font-bold text-brand transition hover:bg-brand hover:text-white disabled:opacity-60"
+                    >
+                      <Pencil className="h-4 w-4" /> Editar publicación
+                    </button>
                     {estado !== 'en_casa' && (
                       <button
                         type="button"

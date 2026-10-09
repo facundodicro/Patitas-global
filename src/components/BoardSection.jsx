@@ -37,6 +37,7 @@ export default function BoardSection({
   isAdmin,
   onMarkReunited,
   onDeleteReport,
+  onEditReport,
 }) {
   const [query, setQuery] = useState('');
   const [chip, setChip] = useState('todas');
@@ -109,6 +110,7 @@ export default function BoardSection({
                 isAdmin={isAdmin}
                 onMarkReunited={onMarkReunited}
                 onDeleteReport={onDeleteReport}
+                onEditReport={onEditReport}
               />
             ))}
           </div>

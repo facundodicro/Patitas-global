@@ -102,6 +102,26 @@ export async function updateReportEstado(id, estado) {
   }
 }
 
+/** Actualiza los campos de un reporte. Devuelve el registro actualizado. */
+export async function updateReport(id, data) {
+  if (!DEMO_MODE) {
+    const { data: row, error } = await supabase
+      .from('reports')
+      .update(data)
+      .eq('id', id)
+      .select()
+      .single()
+    if (error) throw error
+    return row
+  }
+  const r = demo.reports.find((x) => x.id === id)
+  if (r) {
+    Object.assign(r, data)
+    saveDemo()
+  }
+  return r
+}
+
 /** Elimina un reporte (solo el dueño o un admin, según las políticas RLS). */
 export async function deleteReport(id) {
   if (!DEMO_MODE) {

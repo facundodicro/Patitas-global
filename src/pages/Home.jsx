@@ -54,6 +54,7 @@ export default function Home() {
   const [ads, setAds] = useState([])
   const [loading, setLoading] = useState(true)
   const [reportModalOpen, setReportModalOpen] = useState(false)
+  const [editingReport, setEditingReport] = useState(null)
   const [focus, setFocus] = useState(null)
 
   useEffect(() => {
@@ -234,6 +235,7 @@ export default function Home() {
             isAdmin={isAdmin}
             onMarkReunited={handleMarkReunited}
             onDeleteReport={handleDeleteReport}
+            onEditReport={setEditingReport}
           />
         </div>
       </section>
@@ -242,6 +244,15 @@ export default function Home() {
         open={reportModalOpen}
         onClose={() => setReportModalOpen(false)}
         onCreated={(r) => setReports((prev) => [r, ...prev])}
+      />
+
+      <ReportModal
+        open={!!editingReport}
+        editing={editingReport}
+        onClose={() => setEditingReport(null)}
+        onSaved={(updated) =>
+          setReports((prev) => prev.map((r) => (r.id === updated.id ? updated : r)))
+        }
       />
     </div>
   )
