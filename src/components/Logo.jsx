@@ -2,11 +2,12 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 
 /**
- * La palabra entra "corriendo" desde la derecha cada N segundos,
- * se posiciona en su lugar y le queda un halo tenue que la resalta.
+ * Las letras aparecen una por una (entrada lenta) cada N segundos,
+ * y la palabra queda con un halo marcado que la resalta.
  * Solo se usa en el header para no sobrecargar el resto de la app.
  */
 const WORD_CYCLE_MS = 7000
+const LETTER_STAGGER_MS = 120
 
 function AnimatedWord({ text, className = '' }) {
   const [cycle, setCycle] = useState(0)
@@ -17,10 +18,17 @@ function AnimatedWord({ text, className = '' }) {
   }, [])
 
   return (
-    <span className={`word-run-wrap ${className}`} role="text" aria-label={text}>
-      <span key={cycle} className="word-run" aria-hidden="true">
-        {text}
-      </span>
+    <span className={`word-glow-wrap ${className}`} role="text" aria-label={text}>
+      {text.split('').map((ch, i) => (
+        <span
+          key={`${cycle}-${i}`}
+          className="word-letter"
+          style={{ animationDelay: `${i * LETTER_STAGGER_MS}ms` }}
+          aria-hidden="true"
+        >
+          {ch}
+        </span>
+      ))}
     </span>
   )
 }
