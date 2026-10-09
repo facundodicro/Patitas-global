@@ -106,25 +106,15 @@ body {
     opacity: 1;
   }
 }
-/* Marquesina infinita de la red de negocios adheridos */
-@keyframes marquee-x {
-  from {
-    transform: translateX(0);
-  }
-  to {
-    transform: translateX(-50%);
-  }
+/* Carrusel táctil de la red de negocios adheridos (scroll nativo sin barra) */
+.no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
-.animate-marquee {
-  animation: marquee-x 45s linear infinite;
-}
-.marquee-hover:hover .animate-marquee {
-  animation-play-state: paused;
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
 }
 @media (prefers-reduced-motion: reduce) {
-  .animate-marquee {
-    animation: none;
-  }
   .letter-inner {
     animation: none;
   }

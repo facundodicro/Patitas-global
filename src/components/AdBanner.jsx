@@ -1,19 +1,26 @@
-import { useEffect, useState } from 'react'
-import { MessageCircle, Store } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
+import { ChevronRight, MessageCircle, Store } from 'lucide-react'
 import { listAds } from '../lib/store'
 import { waLink } from '../lib/qr'
 
 /**
- * "Red de negocios adheridos": marquesina infinita de publicidades,
- * ubicada encima del footer. Cada tarjeta lleva foto, descripción del
- * negocio y botón de WhatsApp. Solo el admin carga/edita avisos
- * (panel /admin). Si no hay avisos, no se muestra nada.
+ * "Red de negocios adheridos": carrusel táctil de publicidades,
+ * ubicado encima del footer. Cada tarjeta lleva foto, descripción del
+ * negocio y botón de WhatsApp. Se desliza con el dedo (scroll nativo
+ * con snap) y avanza solo cada 5 segundos, pausándose al interactuar.
+ * Solo el admin carga/edita avisos (panel /admin).
+ * Si no hay avisos, no se muestra nada.
  */
+const AUTOPLAY_MS = 5000
+const RESUME_MS = 8000
+
 function AdCard({ ad }) {
   const text = `¡Hola! Vi tu negocio en la red de Patitas y me interesa.`
   return (
-    <article className="w-72 shrink-0 overflow-hidden rounded-2xl bg-white shadow-card">
-      {ad.foto_url ? (
+    <article
+      data-ad-card
+      className="w-72 shrink-0 snap-start overflow-hidden rounded-2xl bg-white shadow-card"
+    >      {ad.foto_url ? (
         <img
           src={ad.foto_url}
           alt={ad.titulo}
@@ -50,6 +57,9 @@ function AdCard({ ad }) {
 
 export default function AdBanner() {
   const [ads, setAds] = useState([])
+  const trackRef = useRef(null)
+  const pausedRef = useRef(false)
+  const resumeTimer = useRef(null)
 
   useEffect(() => {
     let mounted = true
@@ -63,10 +73,37 @@ export default function AdBanner() {
     }
   }, [])
 
-  if (ads.length === 0) return null
+  // Avance automático que se pausa cuando el usuario interactúa
+  useEffect(() => {
+    if (ads.length < 2) return undefined
+    const id = setInterval(() => {
+      const el = trackRef.current
+      if (!el || pausedRef.current) return
+      const card = el.querySelector('[data-ad-card]')
+      const step = card ? card.offsetWidth + 20 : 320 // 20px = gap-5
+      const atEnd = el.scrollLeft + el.clientWidth >= el.scrollWidth - 10
+      if (atEnd) el.scrollTo({ left: 0, behavior: 'smooth' })
+      else el.scrollBy({ left: step, behavior: 'smooth' })
+    }, AUTOPLAY_MS)
+    return () => clearInterval(id)
+  }, [ads.length])
 
-  // Lista duplicada para el loop infinito de la marquesina
-  const loop = [...ads, ...ads]
+  useEffect(
+    () => () => {
+      if (resumeTimer.current) clearTimeout(resumeTimer.current)
+    },
+    [],
+  )
+
+  const pauseAutoplay = () => {
+    pausedRef.current = true
+    if (resumeTimer.current) clearTimeout(resumeTimer.current)
+    resumeTimer.current = setTimeout(() => {
+      pausedRef.current = false
+    }, RESUME_MS)
+  }
+
+  if (ads.length === 0) return null
 
   return (
     <section
@@ -78,19 +115,29 @@ export default function AdBanner() {
           <span className="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-accent/15 text-accent-dark">
             <Store className="h-5 w-5" aria-hidden="true" />
           </span>
-          <div>
+          <div className="min-w-0 flex-1">
             <h2 className="text-xl font-extrabold text-stone-900">
               Red de negocios adheridos
             </h2>
             <p className="text-sm text-stone-500">Comercios que apoyan a Patitas</p>
           </div>
+          {ads.length > 1 && (
+            <p className="hidden items-center gap-1 text-xs font-bold text-stone-400 sm:inline-flex">
+              Deslizá para ver más <ChevronRight className="h-4 w-4" />
+            </p>
+          )}
         </div>
       </div>
 
-      <div className="marquee-hover relative">
-        <div className="animate-marquee flex w-max gap-5 px-4">
-          {loop.map((ad, i) => (
-            <AdCard key={`${ad.id}-${i}`} ad={ad} />
+      <div className="relative">
+        <div
+          ref={trackRef}
+          onPointerDown={pauseAutoplay}
+          onTouchStart={pauseAutoplay}
+          className="no-scrollbar flex snap-x snap-mandatory gap-5 overflow-x-auto px-4 pb-1"
+        >
+          {ads.map((ad) => (
+            <AdCard key={ad.id} ad={ad} />
           ))}
         </div>
         {/* Degradados en los bordes */}
