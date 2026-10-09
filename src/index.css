@@ -72,3 +72,45 @@ body {
 .donate-glow {
   animation: donate-glow 2.8s ease-in-out infinite;
 }
+
+/* Letras del logo que entran en cascada y forman la palabra */
+.letter-mask {
+  display: inline-block;
+  overflow: hidden;
+  vertical-align: bottom;
+}
+.letter-inner {
+  display: inline-block;
+  animation-duration: 0.45s;
+  animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+  animation-fill-mode: both;
+  will-change: transform;
+}
+@keyframes letter-in-up {
+  from {
+    transform: translateY(110%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+@keyframes letter-in-down {
+  from {
+    transform: translateY(-110%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .letter-inner {
+    animation: none;
+  }
+  .donate-glow {
+    animation: none;
+  }
+}

@@ -33,7 +33,7 @@ export default function Header() {
     <>
       <header className="fixed top-0 inset-x-0 z-50 bg-white/95 backdrop-blur border-b border-stone-200">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4 sm:px-6">
-          <Logo />
+          <Logo animated />
 
           <nav className="hidden md:flex items-center gap-6">
             {LINKS.map((l) => (
