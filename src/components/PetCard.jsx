@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Calendar, Check, ChevronDown, ChevronUp, Gift, Home, Map, MapPin, MessageCircle, Pencil, Phone, Trash2 } from 'lucide-react';
+import { Calendar, Check, ChevronDown, ChevronUp, Gift, Home, Map, MapPin, MessageCircle, Pencil, Phone, Trash2, TriangleAlert } from 'lucide-react';
 import Badge from './Badge';
 import PetPhoto from './PetPhoto';
 import { waLink, toWhatsAppNumber } from '../lib/qr';
@@ -66,7 +66,15 @@ export default function PetCard({ report, onLocate, user, isAdmin, onMarkReunite
 
   return (
     <article className="overflow-hidden rounded-2xl bg-white shadow-card animate-fade-up">
-      <PetPhoto src={foto_url} alt={`Foto de ${nombre}`} className="h-44 w-full" />
+      <div className="relative">
+        <PetPhoto src={foto_url} alt={`Foto de ${nombre}`} className="h-44 w-full" />
+        {estado === 'perdida' && (
+          <span className="perdido-chip absolute right-3 top-3 inline-flex items-center gap-1.5 rounded-full bg-[#E53935] px-3 py-1.5 text-xs font-extrabold uppercase tracking-wide text-white">
+            <TriangleAlert className="h-4 w-4" aria-hidden="true" />
+            ¡Perdido!
+          </span>
+        )}
+      </div>
 
       <div className="p-4">
         <div className="flex items-start justify-between gap-2">

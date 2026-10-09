@@ -103,6 +103,22 @@ body {
     text-shadow: 0 0 22px rgba(15, 118, 110, 0.8);
   }
 }
+/* Chip de alerta "¡PERDIDO!" sobre la foto: pulse 1.5s, escala 1→1.05, sombra roja */
+@keyframes perdido-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+    box-shadow: 0 2px 10px rgba(229, 57, 53, 0.45);
+  }
+  50% {
+    transform: scale(1.05);
+    box-shadow: 0 4px 22px rgba(229, 57, 53, 0.65);
+  }
+}
+.perdido-chip {
+  animation: perdido-pulse 1.5s ease-in-out infinite;
+}
+
 /* Carrusel táctil de la red de negocios adheridos (scroll nativo sin barra) */
 .no-scrollbar {
   scrollbar-width: none;
@@ -112,6 +128,9 @@ body {
   display: none;
 }
 @media (prefers-reduced-motion: reduce) {
+  .perdido-chip {
+    animation: none;
+  }
   .word-letter,
   .word-glow-wrap {
     animation: none;
