@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Loader2, LogOut, Trash2, X, PartyPopper } from 'lucide-react'
+import { Camera, Loader2, LogOut, Pencil, Trash2, X, PartyPopper } from 'lucide-react'
 import Logo from '../components/Logo'
 import Badge from '../components/Badge'
 import EmptyState from '../components/EmptyState'
@@ -11,7 +11,9 @@ import {
   deleteAd,
   listAds,
   listReports,
+  updateAd,
   updateReportEstado,
+  uploadPetPhoto,
 } from '../lib/store'
 
 const ESTADOS = ['perdida', 'encontrada', 'en_casa']
@@ -106,8 +108,12 @@ function Panel() {
   const [adTitulo, setAdTitulo] = useState('')
   const [adDescripcion, setAdDescripcion] = useState('')
   const [adWhatsapp, setAdWhatsapp] = useState('')
+  const [adFotoFile, setAdFotoFile] = useState(null)
+  const [adPreview, setAdPreview] = useState(null)
+  const [editingAdId, setEditingAdId] = useState(null)
   const [savingAd, setSavingAd] = useState(false)
   const [celebrated, setCelebrated] = useState(null)
+  const adFileRef = useRef(null)
 
   useEffect(() => {
     let mounted = true
@@ -134,6 +140,60 @@ function Panel() {
       if (estado === 'en_casa' && changed) setCelebrated(changed.nombre)
       return updated
     })
+  }
+
+  const handleAdFile = (f) => {
+    if (!f) return
+    setAdFotoFile(f)
+    const reader = new FileReader()
+    reader.onload = (e) => setAdPreview(e.target.result)
+    reader.readAsDataURL(f)
+  }
+
+  const resetAdForm = () => {
+    setAdTitulo('')
+    setAdDescripcion('')
+    setAdWhatsapp('')
+    setAdFotoFile(null)
+    setAdPreview(null)
+    setEditingAdId(null)
+  }
+
+  const startEditAd = (ad) => {
+    setEditingAdId(ad.id)
+    setAdTitulo(ad.titulo || '')
+    setAdDescripcion(ad.descripcion || '')
+    setAdWhatsapp(ad.whatsapp || '')
+    setAdFotoFile(null)
+    setAdPreview(ad.foto_url || null)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  async function handleSubmitAd(e) {
+    e.preventDefault()
+    setSavingAd(true)
+    try {
+      let foto_url = editingAdId
+        ? ads.find((a) => a.id === editingAdId)?.foto_url ?? null
+        : null
+      if (adFotoFile) foto_url = await uploadPetPhoto(adFotoFile)
+      const data = {
+        titulo: adTitulo.trim(),
+        descripcion: adDescripcion.trim() || null,
+        whatsapp: adWhatsapp.trim(),
+        foto_url,
+      }
+      if (editingAdId) {
+        const updated = await updateAd(editingAdId, data)
+        setAds((prev) => prev.map((a) => (a.id === editingAdId ? updated : a)))
+      } else {
+        const ad = await createAd(data)
+        setAds((prev) => [ad, ...prev])
+      }
+      resetAdForm()
+    } finally {
+      setSavingAd(false)
+    }
   }
 
   async function handleCreateAd(e) {
@@ -244,8 +304,10 @@ function Panel() {
 
       {tab === 'publicidades' && (
         <div className="mt-6 grid gap-8 lg:grid-cols-2">
-          <form onSubmit={handleCreateAd} className="rounded-2xl bg-white p-6 shadow-card">
-            <h2 className="text-lg font-extrabold text-stone-900">Nueva publicidad</h2>
+          <form onSubmit={handleSubmitAd} className="rounded-2xl bg-white p-6 shadow-card">
+            <h2 className="text-lg font-extrabold text-stone-900">
+              {editingAdId ? 'Editar publicidad' : 'Nueva publicidad'}
+            </h2>
             <div className="mt-4 space-y-4">
               <div>
                 <label htmlFor="ad-titulo" className="mb-1 block text-sm font-bold text-stone-700">
@@ -284,14 +346,52 @@ function Panel() {
                   className="w-full rounded-xl border border-stone-300 px-4 py-2.5 outline-none transition focus:border-brand focus:ring-2 focus:ring-brand-soft"
                 />
               </div>
-              <button
-                type="submit"
-                disabled={savingAd}
-                className="flex items-center gap-2 rounded-full bg-accent px-6 py-2.5 font-extrabold text-white transition hover:bg-accent-dark disabled:opacity-60"
-              >
-                {savingAd && <Loader2 className="h-5 w-5 animate-spin" />}
-                Publicar
-              </button>
+              <div>
+                <label className="mb-1 block text-sm font-bold text-stone-700">
+                  Foto del negocio
+                </label>
+                <input
+                  ref={adFileRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => handleAdFile(e.target.files?.[0])}
+                />
+                <button
+                  type="button"
+                  onClick={() => adFileRef.current?.click()}
+                  className="flex w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-stone-200 px-4 py-3 text-sm font-bold text-stone-500 transition hover:border-brand hover:text-brand"
+                >
+                  <Camera className="h-4 w-4" />
+                  {adPreview ? 'Cambiar foto' : 'Subir foto'}
+                </button>
+                {adPreview && (
+                  <img
+                    src={adPreview}
+                    alt="Vista previa"
+                    className="mt-3 h-40 w-full rounded-xl object-cover shadow-card"
+                  />
+                )}
+              </div>
+              <div className="flex flex-wrap items-center gap-3">
+                <button
+                  type="submit"
+                  disabled={savingAd}
+                  className="flex items-center gap-2 rounded-full bg-accent px-6 py-2.5 font-extrabold text-white transition hover:bg-accent-dark disabled:opacity-60"
+                >
+                  {savingAd && <Loader2 className="h-5 w-5 animate-spin" />}
+                  {editingAdId ? 'Guardar cambios' : 'Publicar'}
+                </button>
+                {editingAdId && (
+                  <button
+                    type="button"
+                    onClick={resetAdForm}
+                    className="rounded-full border border-stone-300 px-6 py-2.5 font-extrabold text-stone-600 transition hover:border-stone-400"
+                  >
+                    Cancelar
+                  </button>
+                )}
+              </div>
               <p className="text-xs font-bold text-stone-400">
                 Solo el equipo Patitas ve esta sección.
               </p>
@@ -304,6 +404,13 @@ function Panel() {
             )}
             {ads.map((ad) => (
               <div key={ad.id} className="flex items-start gap-3 rounded-2xl bg-white p-4 shadow-card">
+                {ad.foto_url && (
+                  <img
+                    src={ad.foto_url}
+                    alt={ad.titulo}
+                    className="h-16 w-16 shrink-0 rounded-xl object-cover"
+                  />
+                )}
                 <div className="min-w-0 flex-1">
                   <p className="font-extrabold text-stone-900">{ad.titulo}</p>
                   {ad.descripcion && (
@@ -313,6 +420,14 @@ function Panel() {
                     <p className="mt-1 text-sm font-bold text-stone-500">{ad.whatsapp}</p>
                   )}
                 </div>
+                <button
+                  type="button"
+                  onClick={() => startEditAd(ad)}
+                  aria-label={`Editar ${ad.titulo}`}
+                  className="rounded-full p-2 text-brand transition hover:bg-brand/10"
+                >
+                  <Pencil className="h-5 w-5" />
+                </button>
                 <button
                   type="button"
                   onClick={() => handleDeleteAd(ad.id)}

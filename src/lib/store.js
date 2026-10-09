@@ -295,3 +295,23 @@ export async function deleteAd(id) {
   demo.ads = demo.ads.filter((a) => a.id !== id)
   saveDemo()
 }
+
+/** Actualiza una publicidad. Devuelve el registro actualizado. */
+export async function updateAd(id, data) {
+  if (!DEMO_MODE) {
+    const { data: row, error } = await supabase
+      .from('ads')
+      .update(data)
+      .eq('id', id)
+      .select()
+      .single()
+    if (error) throw error
+    return row
+  }
+  const a = demo.ads.find((x) => x.id === id)
+  if (a) {
+    Object.assign(a, data)
+    saveDemo()
+  }
+  return a
+}
