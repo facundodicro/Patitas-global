@@ -29,7 +29,15 @@ function matches(report, query, chip) {
   return true;
 }
 
-export default function BoardSection({ reports, loading, onLocate }) {
+export default function BoardSection({
+  reports,
+  loading,
+  onLocate,
+  user,
+  isAdmin,
+  onMarkReunited,
+  onDeleteReport,
+}) {
   const [query, setQuery] = useState('');
   const [chip, setChip] = useState('todas');
 
@@ -93,7 +101,15 @@ export default function BoardSection({ reports, loading, onLocate }) {
         ) : (
           <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {filtered.map((report) => (
-              <PetCard key={report.id} report={report} onLocate={onLocate} />
+              <PetCard
+                key={report.id}
+                report={report}
+                onLocate={onLocate}
+                user={user}
+                isAdmin={isAdmin}
+                onMarkReunited={onMarkReunited}
+                onDeleteReport={onDeleteReport}
+              />
             ))}
           </div>
         )}

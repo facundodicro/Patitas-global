@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Calendar, ChevronDown, ChevronUp, Gift, Map, MapPin, MessageCircle, Phone } from 'lucide-react';
+import { Calendar, Check, ChevronDown, ChevronUp, Gift, Home, Map, MapPin, MessageCircle, Phone, Trash2 } from 'lucide-react';
 import Badge from './Badge';
 import PetPhoto from './PetPhoto';
 import { waLink, toWhatsAppNumber } from '../lib/qr';
@@ -14,8 +14,11 @@ function formatFecha(fecha) {
   });
 }
 
-export default function PetCard({ report, onLocate }) {
+export default function PetCard({ report, onLocate, user, isAdmin, onMarkReunited, onDeleteReport }) {
   const [open, setOpen] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [actionError, setActionError] = useState('');
   const {
     nombre,
     especie,
@@ -27,9 +30,38 @@ export default function PetCard({ report, onLocate }) {
     telefono,
     foto_url,
     estado,
+    reporter_id,
   } = report;
 
   const whatsappText = `¡Hola! Vi tu publicación de ${nombre} en Patitas y creo que puedo ayudarte.`;
+
+  // Solo el dueño de la publicación (o un admin) puede gestionarla
+  const canManage = isAdmin || (user && reporter_id && reporter_id === user.id);
+
+  async function handleReunited() {
+    if (!onMarkReunited || busy) return;
+    setBusy(true);
+    setActionError('');
+    try {
+      await onMarkReunited(report);
+    } catch {
+      setActionError('No se pudo actualizar. Probá de nuevo.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleDelete() {
+    if (!onDeleteReport || busy) return;
+    setBusy(true);
+    setActionError('');
+    try {
+      await onDeleteReport(report.id);
+    } catch {
+      setActionError('No se pudo eliminar. Probá de nuevo.');
+      setBusy(false);
+    }
+  }
 
   return (
     <article className="overflow-hidden rounded-2xl bg-white shadow-card animate-fade-up">
@@ -115,6 +147,64 @@ export default function PetCard({ report, onLocate }) {
                 </a>
               )}
             </div>
+
+            {canManage && (
+              <div className="border-t border-stone-100 pt-3">
+                <p className="mb-2 text-xs font-bold uppercase tracking-wide text-stone-400">
+                  Tu publicación
+                </p>
+                {actionError && (
+                  <p className="mb-2 text-xs font-semibold text-red-600">{actionError}</p>
+                )}
+                {!confirmDelete ? (
+                  <div className="flex flex-col gap-2">
+                    {estado !== 'en_casa' && (
+                      <button
+                        type="button"
+                        onClick={handleReunited}
+                        disabled={busy}
+                        className="inline-flex items-center justify-center gap-2 rounded-full bg-brand px-4 py-2 text-sm font-bold text-white transition hover:brightness-110 disabled:opacity-60"
+                      >
+                        <Home className="h-4 w-4" />
+                        {busy ? 'Guardando…' : 'Ya está en casa 🏠'}
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => setConfirmDelete(true)}
+                      disabled={busy}
+                      className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-red-200 px-4 py-2 text-sm font-bold text-red-600 transition hover:bg-red-50 disabled:opacity-60"
+                    >
+                      <Trash2 className="h-4 w-4" /> Eliminar publicación
+                    </button>
+                  </div>
+                ) : (
+                  <div className="rounded-xl bg-red-50 p-3">
+                    <p className="text-sm font-semibold text-stone-800">
+                      ¿Eliminar esta publicación? No se puede deshacer.
+                    </p>
+                    <div className="mt-2 flex gap-2">
+                      <button
+                        type="button"
+                        onClick={handleDelete}
+                        disabled={busy}
+                        className="inline-flex flex-1 items-center justify-center gap-1 rounded-full bg-red-600 px-4 py-2 text-sm font-bold text-white transition hover:bg-red-700 disabled:opacity-60"
+                      >
+                        <Check className="h-4 w-4" /> {busy ? 'Eliminando…' : 'Sí, eliminar'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setConfirmDelete(false)}
+                        disabled={busy}
+                        className="rounded-full border border-stone-300 px-4 py-2 text-sm font-bold text-stone-600 transition hover:border-stone-400"
+                      >
+                        Cancelar
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         )}
       </div>

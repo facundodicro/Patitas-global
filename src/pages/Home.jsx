@@ -7,7 +7,8 @@ import DonateButton from '../components/DonateButton'
 import LikeButton from '../components/LikeButton'
 import MapSection from '../components/MapSection'
 import ReportModal from '../components/ReportModal'
-import { listReports, listAds, DEMO_MODE } from '../lib/store'
+import { listReports, listAds, updateReportEstado, deleteReport, DEMO_MODE } from '../lib/store'
+import { useAuth } from '../hooks/useAuth'
 import { waLink } from '../lib/qr'
 
 // Cuadrícula pseudo-QR decorativa (patrón fijo para que sea estable entre renders)
@@ -48,6 +49,7 @@ function Paso({ icon, title, text, color }) {
 }
 
 export default function Home() {
+  const { user, isAdmin } = useAuth()
   const [reports, setReports] = useState([])
   const [ads, setAds] = useState([])
   const [loading, setLoading] = useState(true)
@@ -78,6 +80,20 @@ export default function Home() {
   function handleLocate(report) {
     setFocus({ lat: report.lat, lng: report.lng })
     document.querySelector('#mapa')?.scrollIntoView({ behavior: 'smooth' })
+  }
+
+  /** Marca un reporte como reunido ("en casa") y actualiza la lista local. */
+  async function handleMarkReunited(report) {
+    await updateReportEstado(report.id, 'en_casa')
+    setReports((prev) =>
+      prev.map((r) => (r.id === report.id ? { ...r, estado: 'en_casa' } : r)),
+    )
+  }
+
+  /** Elimina un reporte y lo quita de la lista local. */
+  async function handleDeleteReport(id) {
+    await deleteReport(id)
+    setReports((prev) => prev.filter((r) => r.id !== id))
   }
 
   return (
@@ -210,7 +226,15 @@ export default function Home() {
       {/* TABLÓN */}
       <section id="tablon" className="bg-stone-50">
         <div className="mx-auto max-w-6xl px-4 py-14">
-          <BoardSection reports={reports} loading={loading} onLocate={handleLocate} />
+          <BoardSection
+            reports={reports}
+            loading={loading}
+            onLocate={handleLocate}
+            user={user}
+            isAdmin={isAdmin}
+            onMarkReunited={handleMarkReunited}
+            onDeleteReport={handleDeleteReport}
+          />
         </div>
       </section>
 

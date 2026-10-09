@@ -102,6 +102,17 @@ export async function updateReportEstado(id, estado) {
   }
 }
 
+/** Elimina un reporte (solo el dueño o un admin, según las políticas RLS). */
+export async function deleteReport(id) {
+  if (!DEMO_MODE) {
+    const { error } = await supabase.from('reports').delete().eq('id', id)
+    if (error) throw error
+    return
+  }
+  demo.reports = demo.reports.filter((x) => x.id !== id)
+  saveDemo()
+}
+
 /* -------------------------------- MASCOTAS ------------------------------ */
 
 /** Mascotas del dueño indicado. */
