@@ -1,6 +1,8 @@
-import { Check } from 'lucide-react';
+import { Check, MessageCircle } from 'lucide-react';
 import Logo from './Logo';
 import DonateButton from './DonateButton';
+import { waLink } from '../lib/qr';
+import { DONATE_WHATSAPP } from '../lib/config';
 
 const TIPS = [
   'Publicá rápido: cuanto antes avisás, más chances de reencuentro.',
@@ -51,9 +53,12 @@ export default function Footer() {
             </li>
             <li>
               <a
-                href="mailto:ayuda@patitas.com.ar?subject=Contacto%20Patitas"
-                className="text-stone-400 transition hover:text-white"
+                href={waLink(DONATE_WHATSAPP, '¡Hola! Te escribo desde Patitas.')}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-2 text-stone-400 transition hover:text-white"
               >
+                <MessageCircle className="h-4 w-4" />
                 Contacto
               </a>
             </li>
