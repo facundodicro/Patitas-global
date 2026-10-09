@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Camera, Loader2, LogOut, Pencil, Star, Trash2, X, PartyPopper } from 'lucide-react'
+import { Camera, Loader2, LogOut, MapPin, Pencil, Star, Trash2, X, PartyPopper } from 'lucide-react'
 import Logo from '../components/Logo'
 import Badge from '../components/Badge'
 import EmptyState from '../components/EmptyState'
@@ -108,6 +108,7 @@ function Panel() {
   const [adTitulo, setAdTitulo] = useState('')
   const [adDescripcion, setAdDescripcion] = useState('')
   const [adWhatsapp, setAdWhatsapp] = useState('')
+  const [adZona, setAdZona] = useState('')
   const [adFotoFile, setAdFotoFile] = useState(null)
   const [adPreview, setAdPreview] = useState(null)
   const [editingAdId, setEditingAdId] = useState(null)
@@ -154,6 +155,7 @@ function Panel() {
     setAdTitulo('')
     setAdDescripcion('')
     setAdWhatsapp('')
+    setAdZona('')
     setAdFotoFile(null)
     setAdPreview(null)
     setEditingAdId(null)
@@ -164,6 +166,7 @@ function Panel() {
     setAdTitulo(ad.titulo || '')
     setAdDescripcion(ad.descripcion || '')
     setAdWhatsapp(ad.whatsapp || '')
+    setAdZona(ad.zona || '')
     setAdFotoFile(null)
     setAdPreview(ad.foto_url || null)
     window.scrollTo({ top: 0, behavior: 'smooth' })
@@ -181,6 +184,7 @@ function Panel() {
         titulo: adTitulo.trim(),
         descripcion: adDescripcion.trim() || null,
         whatsapp: adWhatsapp.trim(),
+        zona: adZona.trim() || null,
         foto_url,
       }
       if (editingAdId) {
@@ -362,6 +366,21 @@ function Panel() {
                 />
               </div>
               <div>
+                <label htmlFor="ad-zona" className="mb-1 block text-sm font-bold text-stone-700">
+                  Zona del negocio
+                </label>
+                <input
+                  id="ad-zona"
+                  value={adZona}
+                  onChange={(e) => setAdZona(e.target.value)}
+                  placeholder="Ej: Necochea"
+                  className="w-full rounded-xl border border-stone-300 px-4 py-2.5 outline-none transition focus:border-brand focus:ring-2 focus:ring-brand-soft"
+                />
+                <p className="mt-1 text-xs text-stone-400">
+                  Se muestra primero a los usuarios de esta zona.
+                </p>
+              </div>
+              <div>
                 <label className="mb-1 block text-sm font-bold text-stone-700">
                   Foto del negocio
                 </label>
@@ -440,6 +459,11 @@ function Panel() {
                   )}
                   {ad.whatsapp && (
                     <p className="mt-1 text-sm font-bold text-stone-500">{ad.whatsapp}</p>
+                  )}
+                  {ad.zona && (
+                    <p className="mt-1 flex items-center gap-1 text-xs font-bold text-stone-400">
+                      <MapPin className="h-3.5 w-3.5" /> {ad.zona}
+                    </p>
                   )}
                 </div>
                 <button

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
-import { ChevronRight, MessageCircle, Store } from 'lucide-react'
-import { listAds } from '../lib/store'
+import { ChevronRight, MapPin, MessageCircle, Store } from 'lucide-react'
+import { getProfile, listAds } from '../lib/store'
+import { useAuth } from '../hooks/useAuth'
 import { waLink } from '../lib/qr'
 
 /**
@@ -14,7 +15,34 @@ import { waLink } from '../lib/qr'
 const AUTOPLAY_MS = 5000
 const RESUME_MS = 8000
 
-function AdCard({ ad }) {
+/** Normaliza texto para comparar zonas (minúsculas, sin tildes). */
+function norm(s) {
+  return (s || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim()
+}
+
+/**
+ * Ordena los avisos por cercanía con la zona del usuario:
+ * primero los de su zona, luego los sin zona, luego el resto.
+ */
+function sortAdsByZona(list, userZona) {
+  const u = norm(userZona)
+  if (!u) return list
+  const score = (ad) => {
+    const a = norm(ad.zona)
+    if (!a) return 1
+    return a.includes(u) || u.includes(a) ? 2 : 0
+  }
+  return [...list]
+    .map((ad, i) => ({ ad, i }))
+    .sort((x, y) => score(y.ad) - score(x.ad) || x.i - y.i)
+    .map((x) => x.ad)
+}
+
+function AdCard({ ad, isLocal }) {
   const text = `¡Hola! Vi tu negocio en la red de Patitas y me interesa.`
   return (
     <article
@@ -33,8 +61,13 @@ function AdCard({ ad }) {
         </div>
       )}
       <div className="p-4">
-        <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-stone-400">
+        <p className="flex items-center justify-between text-[10px] font-bold uppercase tracking-[0.18em] text-stone-400">
           Publicidad
+          {isLocal && (
+            <span className="inline-flex items-center gap-1 rounded-full bg-brand/10 px-2 py-0.5 text-[10px] font-extrabold normal-case tracking-normal text-brand">
+              <MapPin className="h-3 w-3" /> En tu zona
+            </span>
+          )}
         </p>
         <h3 className="mt-1 font-extrabold text-stone-900">{ad.titulo}</h3>
         {ad.descripcion && (
@@ -56,23 +89,36 @@ function AdCard({ ad }) {
 }
 
 export default function AdBanner() {
+  const { user } = useAuth()
   const [ads, setAds] = useState([])
+  const [userZona, setUserZona] = useState('')
   const trackRef = useRef(null)
   const pausedRef = useRef(false)
   const resumeTimer = useRef(null)
 
   useEffect(() => {
     let mounted = true
-    listAds()
-      .then((list) => {
+    async function load() {
+      try {
+        const [list, profile] = await Promise.all([
+          listAds(),
+          user ? getProfile(user.id).catch(() => null) : Promise.resolve(null),
+        ])
+        if (!mounted) return
         // El patrocinador destacado va en su propia tarjeta, no en el banner
-        if (mounted) setAds((list || []).filter((a) => !a.destacado))
-      })
-      .catch(() => {})
+        const rest = (list || []).filter((a) => !a.destacado)
+        const zona = profile?.zona || ''
+        setUserZona(zona)
+        setAds(sortAdsByZona(rest, zona))
+      } catch {
+        if (mounted) setAds([])
+      }
+    }
+    load()
     return () => {
       mounted = false
     }
-  }, [])
+  }, [user?.id])
 
   // Avance automático que se pausa cuando el usuario interactúa
   useEffect(() => {
@@ -137,9 +183,12 @@ export default function AdBanner() {
           onTouchStart={pauseAutoplay}
           className="no-scrollbar flex snap-x snap-mandatory gap-5 overflow-x-auto px-4 pb-1"
         >
-          {ads.map((ad) => (
-            <AdCard key={ad.id} ad={ad} />
-          ))}
+          {ads.map((ad) => {
+            const a = norm(ad.zona)
+            const u = norm(userZona)
+            const isLocal = Boolean(a && u && (a.includes(u) || u.includes(a)))
+            return <AdCard key={ad.id} ad={ad} isLocal={isLocal} />
+          })}
         </div>
         {/* Degradados en los bordes */}
         <div className="pointer-events-none absolute inset-y-0 left-0 w-12 bg-gradient-to-r from-stone-100 to-transparent" />
