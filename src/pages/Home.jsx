@@ -163,17 +163,20 @@ export default function Home() {
       </section>
 
       {/* PATROCINADOR DESTACADO */}
-      {ads.length > 0 && (
+      {(() => {
+        const sponsor = ads.find((a) => a.destacado)
+        if (!sponsor) return null
+        return (
         <section className="mx-auto max-w-6xl px-4 py-10">
           <div className="relative overflow-hidden rounded-3xl bg-white shadow-card">
             <span className="absolute right-4 top-4 z-10 rounded-full bg-stone-900/70 px-3 py-1 text-[11px] font-extrabold uppercase tracking-wider text-white backdrop-blur">
               Patrocinado
             </span>
             <div className="grid md:grid-cols-2">
-              {ads[0].foto_url ? (
+              {sponsor.foto_url ? (
                 <img
-                  src={ads[0].foto_url}
-                  alt={ads[0].titulo}
+                  src={sponsor.foto_url}
+                  alt={sponsor.titulo}
                   className="h-56 w-full object-cover md:h-full md:min-h-[280px]"
                 />
               ) : (
@@ -182,13 +185,13 @@ export default function Home() {
                 </div>
               )}
               <div className="flex flex-col justify-center p-6 sm:p-8">
-                <h3 className="text-2xl font-extrabold text-stone-900">{ads[0].titulo}</h3>
-                {ads[0].descripcion && (
-                  <p className="mt-2 text-stone-600">{ads[0].descripcion}</p>
+                <h3 className="text-2xl font-extrabold text-stone-900">{sponsor.titulo}</h3>
+                {sponsor.descripcion && (
+                  <p className="mt-2 text-stone-600">{sponsor.descripcion}</p>
                 )}
-                {ads[0].whatsapp && (
+                {sponsor.whatsapp && (
                   <a
-                    href={waLink(ads[0].whatsapp, `¡Hola! Vi su publicidad en Patitas. (${ads[0].titulo})`)}
+                    href={waLink(sponsor.whatsapp, `¡Hola! Vi su publicidad en Patitas. (${sponsor.titulo})`)}
                     target="_blank"
                     rel="noreferrer"
                     className="mt-4 inline-flex w-fit items-center gap-2 rounded-full bg-[#25D366] px-5 py-2.5 font-extrabold text-white transition hover:brightness-95"
@@ -201,7 +204,8 @@ export default function Home() {
             </div>
           </div>
         </section>
-      )}
+        )
+      })()}
 
       {/* CÓMO FUNCIONA */}
       <section id="como-funciona" className="bg-white">

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Camera, Loader2, LogOut, Pencil, Trash2, X, PartyPopper } from 'lucide-react'
+import { Camera, Loader2, LogOut, Pencil, Star, Trash2, X, PartyPopper } from 'lucide-react'
 import Logo from '../components/Logo'
 import Badge from '../components/Badge'
 import EmptyState from '../components/EmptyState'
@@ -219,6 +219,21 @@ function Panel() {
     setAds((prev) => prev.filter((a) => a.id !== id))
   }
 
+  /** Marca un aviso como patrocinador destacado (solo puede haber uno). */
+  async function handleToggleSponsor(ad) {
+    const make = !ad.destacado
+    const others = ads.filter((a) => a.id !== ad.id && a.destacado)
+    await Promise.all(others.map((a) => updateAd(a.id, { destacado: false })))
+    const updated = await updateAd(ad.id, { destacado: make })
+    setAds((prev) =>
+      prev.map((a) => {
+        if (a.id === ad.id) return updated
+        if (a.destacado) return { ...a, destacado: false }
+        return a
+      }),
+    )
+  }
+
   if (loading) return <Spinner />
 
   return (
@@ -412,7 +427,14 @@ function Panel() {
                   />
                 )}
                 <div className="min-w-0 flex-1">
-                  <p className="font-extrabold text-stone-900">{ad.titulo}</p>
+                  <p className="flex items-center gap-2 font-extrabold text-stone-900">
+                    {ad.titulo}
+                    {ad.destacado && (
+                      <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wide text-amber-700">
+                        Patrocinador
+                      </span>
+                    )}
+                  </p>
                   {ad.descripcion && (
                     <p className="mt-1 text-sm text-stone-600">{ad.descripcion}</p>
                   )}
@@ -420,6 +442,15 @@ function Panel() {
                     <p className="mt-1 text-sm font-bold text-stone-500">{ad.whatsapp}</p>
                   )}
                 </div>
+                <button
+                  type="button"
+                  onClick={() => handleToggleSponsor(ad)}
+                  aria-label={ad.destacado ? `Quitar patrocinador a ${ad.titulo}` : `Marcar ${ad.titulo} como patrocinador`}
+                  title={ad.destacado ? 'Quitar patrocinador' : 'Marcar como patrocinador'}
+                  className={`rounded-full p-2 transition hover:bg-amber-100 ${ad.destacado ? 'text-amber-500' : 'text-stone-300'}`}
+                >
+                  <Star className="h-5 w-5" fill={ad.destacado ? 'currentColor' : 'none'} />
+                </button>
                 <button
                   type="button"
                   onClick={() => startEditAd(ad)}

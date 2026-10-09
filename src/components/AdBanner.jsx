@@ -65,7 +65,8 @@ export default function AdBanner() {
     let mounted = true
     listAds()
       .then((list) => {
-        if (mounted) setAds(list || [])
+        // El patrocinador destacado va en su propia tarjeta, no en el banner
+        if (mounted) setAds((list || []).filter((a) => !a.destacado))
       })
       .catch(() => {})
     return () => {
