@@ -120,7 +120,7 @@ export default function PetCard({ report, onLocate, user, isAdmin, onMarkReunite
               </p>
             )}
             <div className="flex flex-col gap-2">
-              {onLocate && (
+              {onLocate && typeof report.lat === 'number' && typeof report.lng === 'number' && (
                 <button
                   type="button"
                   onClick={() => onLocate(report)}

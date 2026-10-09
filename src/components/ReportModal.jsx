@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { X, AlertTriangle, CheckCircle2, Camera, Loader2 } from 'lucide-react'
+import { X, AlertTriangle, CheckCircle2, Camera, Loader2, MapPin, Navigation } from 'lucide-react'
 import { createReport, updateReport, uploadPetPhoto, DEMO_MODE } from '../lib/store'
 import { useAuth } from '../hooks/useAuth'
 
@@ -16,6 +16,9 @@ export default function ReportModal({ open, onClose, onCreated, editing = null, 
   const [telefono, setTelefono] = useState('')
   const [file, setFile] = useState(null)
   const [preview, setPreview] = useState(null)
+  const [coords, setCoords] = useState(null)
+  const [locating, setLocating] = useState(false)
+  const [locError, setLocError] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
   const fileRef = useRef(null)
@@ -34,6 +37,12 @@ export default function ReportModal({ open, onClose, onCreated, editing = null, 
       setTelefono(editing.telefono || '')
       setFile(null)
       setPreview(editing.foto_url || null)
+      setCoords(
+        editing.lat != null && editing.lng != null
+          ? { lat: editing.lat, lng: editing.lng }
+          : null,
+      )
+      setLocError('')
       setError('')
       setSubmitting(false)
     }
@@ -56,6 +65,31 @@ export default function ReportModal({ open, onClose, onCreated, editing = null, 
     setNombre(''); setEspecie('Perro'); setRaza(''); setSenas('')
     setRecompensa(''); setZona(''); setFecha(''); setTelefono('')
     setFile(null); setPreview(null); setError(''); setSubmitting(false)
+    setCoords(null); setLocError('')
+  }
+
+  const handleUseLocation = () => {
+    if (!('geolocation' in navigator)) {
+      setLocError('Tu dispositivo no soporta geolocalización.')
+      return
+    }
+    setLocating(true)
+    setLocError('')
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude })
+        setLocating(false)
+      },
+      (err) => {
+        setLocating(false)
+        setLocError(
+          err.code === 1
+            ? 'Permiso denegado: activá la ubicación en tu navegador para usarla.'
+            : 'No se pudo obtener la ubicación. Probá de nuevo.',
+        )
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 },
+    )
   }
 
   const handleSubmit = async (e) => {
@@ -80,6 +114,8 @@ export default function ReportModal({ open, onClose, onCreated, editing = null, 
         fecha,
         telefono: telefono.trim(),
         foto_url,
+        lat: coords?.lat ?? null,
+        lng: coords?.lng ?? null,
         // Si ya estaba reunida, se mantiene; si no, sigue al tipo elegido
         estado:
           editing && editing.estado === 'en_casa'
@@ -246,6 +282,44 @@ export default function ReportModal({ open, onClose, onCreated, editing = null, 
               inputMode="tel"
               required
             />
+          </div>
+
+          <div>
+            <label className={labelCls}>Ubicación en el mapa (opcional)</label>
+            {!coords ? (
+              <button
+                type="button"
+                onClick={handleUseLocation}
+                disabled={locating}
+                className="w-full flex items-center justify-center gap-2 rounded-xl border-2 border-brand/40 bg-brand/5 px-4 py-3 text-sm font-bold text-brand hover:border-brand transition disabled:opacity-60"
+              >
+                {locating ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Navigation className="h-4 w-4" />
+                )}
+                {locating ? 'Obteniendo ubicación…' : 'Usar mi ubicación'}
+              </button>
+            ) : (
+              <div className="flex items-center justify-between gap-2 rounded-xl border border-green-200 bg-green-50 px-4 py-3">
+                <p className="flex items-center gap-2 text-sm font-bold text-green-700">
+                  <MapPin className="h-4 w-4" /> Ubicación guardada ✓
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setCoords(null)}
+                  className="text-xs font-bold text-stone-500 underline hover:text-stone-700"
+                >
+                  Quitar
+                </button>
+              </div>
+            )}
+            {locError && (
+              <p className="mt-1.5 text-xs font-semibold text-red-600">{locError}</p>
+            )}
+            <p className="mt-1.5 text-xs text-stone-400">
+              Así tu publicación aparece en el mapa para quienes estén cerca.
+            </p>
           </div>
 
           <div>
