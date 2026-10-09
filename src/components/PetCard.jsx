@@ -66,6 +66,19 @@ export default function PetCard({ report, onLocate, user, isAdmin, onMarkReunite
 
   return (
     <article className="overflow-hidden rounded-2xl bg-white shadow-card animate-fade-up">
+      {estado === 'perdida' && (
+        <div className="flex items-center justify-between gap-2 bg-[#E53935] px-4 py-2.5">
+          <p className="flex items-center gap-2 text-sm font-extrabold uppercase tracking-wide text-white">
+            <TriangleAlert className="h-5 w-5 shrink-0" aria-hidden="true" />
+            ¡Esta mascota está perdida!
+          </p>
+          {recompensa && (
+            <span className="shrink-0 rounded-full bg-amber-300 px-3 py-1 text-xs font-extrabold text-stone-900">
+              {recompensa}
+            </span>
+          )}
+        </div>
+      )}
       <div className="relative">
         <PetPhoto src={foto_url} alt={`Foto de ${nombre}`} className="h-44 w-full" />
         {estado === 'perdida' && (
@@ -97,7 +110,7 @@ export default function PetCard({ report, onLocate, user, isAdmin, onMarkReunite
               <Calendar className="h-4 w-4 shrink-0 text-brand" /> {formatFecha(fecha)}
             </p>
           )}
-          {recompensa && (
+          {recompensa && estado !== 'perdida' && (
             <p className="flex items-center gap-2 font-semibold text-amber-600">
               <Gift className="h-4 w-4 shrink-0" /> Recompensa: {recompensa}
             </p>
