@@ -1,8 +1,10 @@
 import { useRef, useState } from 'react'
 import { X, AlertTriangle, CheckCircle2, Camera, Loader2 } from 'lucide-react'
 import { createReport, uploadPetPhoto, DEMO_MODE } from '../lib/store'
+import { useAuth } from '../hooks/useAuth'
 
 export default function ReportModal({ open, onClose, onCreated }) {
+  const { user } = useAuth()
   const [tipo, setTipo] = useState('perdida')
   const [nombre, setNombre] = useState('')
   const [especie, setEspecie] = useState('Perro')
@@ -49,6 +51,7 @@ export default function ReportModal({ open, onClose, onCreated }) {
       let foto_url = null
       if (file) foto_url = await uploadPetPhoto(file)
       const report = await createReport({
+        reporter_id: user?.id ?? null,
         tipo,
         nombre: nombre.trim(),
         especie,

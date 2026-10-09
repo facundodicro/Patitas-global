@@ -18,8 +18,15 @@ createRoot(document.getElementById('root')).render(
 // Service worker para la PWA (solo en producción)
 if ('serviceWorker' in navigator && import.meta.env.PROD) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js').catch(() => {
-      /* instalación offline opcional: la app funciona igual sin SW */
-    })
+    navigator.serviceWorker
+      .register('/sw.js')
+      .then((reg) => {
+        // Buscar una versión nueva del SW en cada visita (evita quedarse
+        // con una versión vieja cacheada de la app)
+        if (reg.update) reg.update().catch(() => {})
+      })
+      .catch(() => {
+        /* instalación offline opcional: la app funciona igual sin SW */
+      })
   })
 }

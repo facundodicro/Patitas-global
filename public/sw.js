@@ -1,5 +1,5 @@
-/* Service worker mínimo de Patitas: cachea el shell de la app para uso offline. */
-const CACHE = 'patitas-v1'
+/* Service worker de Patitas: shell offline + última versión siempre en navegación. */
+const CACHE = 'patitas-v2'
 const CORE = ['/', '/index.html', '/manifest.webmanifest', '/favicon.svg']
 
 self.addEventListener('install', (event) => {
@@ -23,6 +23,27 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const { request } = event
   if (request.method !== 'GET' || !request.url.startsWith(self.location.origin)) return
+
+  // Navegaciones (la página en sí): red primero para traer siempre la última
+  // versión publicada; si no hay conexión, se usa la copia en caché.
+  if (request.mode === 'navigate') {
+    event.respondWith(
+      fetch(request)
+        .then((res) => {
+          if (res.ok) {
+            const copy = res.clone()
+            caches.open(CACHE).then((cache) => cache.put(request, copy))
+          }
+          return res
+        })
+        .catch(() =>
+          caches.match(request).then((cached) => cached || caches.match('/index.html')),
+        ),
+    )
+    return
+  }
+
+  // Assets con hash (JS/CSS): caché primero; cambian de nombre con cada deploy.
   event.respondWith(
     caches.match(request).then((cached) => {
       const network = fetch(request)
