@@ -1,16 +1,19 @@
 import { useState } from 'react'
-import { X, Heart, Wallet, Copy, Check, MessageCircle } from 'lucide-react'
-import { DONATE_MP_ALIAS, donateLink, hasRealDonateAlias } from '../lib/config'
+import { X, Heart, Wallet, Copy, Check, MessageCircle, Globe } from 'lucide-react'
+import { DONATE_MP_ALIAS, donateLink, hasRealDonateAlias, paypalDonateUrl, hasPaypal } from '../lib/config'
 
 /**
  * Modal de donación/agradecimiento.
  * - "Donar con Mercado Pago": muestra el alias con botón para copiarlo.
  *   Se oculta automáticamente si no hay un alias real configurado.
+ * - "Donar desde el exterior": abre el link de donación de PayPal.
+ *   Se oculta si no hay email de PayPal configurado.
  * - "Agradecer por WhatsApp": abre el chat con mensaje pre-cargado.
  */
 export default function DonateModal({ open, onClose }) {
   const [copied, setCopied] = useState(false)
   const showMercadoPago = hasRealDonateAlias()
+  const showPaypal = hasPaypal()
 
   if (!open) return null
 
@@ -101,6 +104,27 @@ export default function DonateModal({ open, onClose }) {
             <MessageCircle className="h-5 w-5" />
             Agradecer por WhatsApp
           </a>
+
+          {showPaypal && (
+            <a
+              href={paypalDonateUrl()}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-4 rounded-2xl border border-stone-200 p-5 transition hover:border-[#0070E0]/50 hover:shadow-lg"
+            >
+              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#0070E0]/10">
+                <Globe className="h-5 w-5 text-[#0070E0]" />
+              </span>
+              <span>
+                <span className="block font-extrabold text-stone-900">
+                  Donar desde el exterior
+                </span>
+                <span className="block text-xs font-bold text-stone-500">
+                  Con PayPal, desde cualquier país
+                </span>
+              </span>
+            </a>
+          )}
         </div>
       </div>
     </div>
