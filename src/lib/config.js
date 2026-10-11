@@ -11,6 +11,12 @@
  * ni espacios.
  * 👉 Para cambiarlo, editá el valor por defecto acá abajo o definí la
  * variable de entorno VITE_DONATE_WHATSAPP.
+ *
+ * DONATE_PAYPAL_EMAIL: email de la cuenta PayPal del creador, para
+ * donaciones internacionales.
+ * 👉 Para cambiarlo, editá el valor por defecto acá abajo o definí la
+ * variable de entorno VITE_DONATE_PAYPAL_EMAIL (en el .env o en Vercel).
+ * Si está vacío, la opción de PayPal se oculta automáticamente.
  */
 
 export const MP_ALIAS_PLACEHOLDER = 'patitas.donaciones.mp'
@@ -21,6 +27,20 @@ export const DONATE_MP_ALIAS =
 
 export const DONATE_WHATSAPP =
   import.meta.env.VITE_DONATE_WHATSAPP || '5492262591262'
+
+export const DONATE_PAYPAL_EMAIL =
+  import.meta.env.VITE_DONATE_PAYPAL_EMAIL || 'facundodicroce76@gmail.com'
+
+/** Link de donación de PayPal (se oculta si no hay email configurado) */
+export function paypalDonateUrl() {
+  if (!DONATE_PAYPAL_EMAIL) return ''
+  return `https://www.paypal.com/donate/?business=${encodeURIComponent(DONATE_PAYPAL_EMAIL)}&currency_code=USD`
+}
+
+/** true si hay una vía de PayPal configurada */
+export function hasPaypal() {
+  return Boolean(paypalDonateUrl())
+}
 
 /** true si hay un alias de Mercado Pago real configurado */
 export function hasRealDonateAlias() {
