@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 import {
   CalendarDays,
   Loader2,
@@ -20,6 +20,7 @@ import { useAuth } from '../hooks/useAuth'
 import {
   createAtencion,
   deleteAtencion,
+  deletePet,
   getMyVeterinaria,
   getPetWithVeterinaria,
   listAtenciones,
@@ -197,6 +198,7 @@ function AtencionModal({ open, onClose, onSaved, mascotaId, veterinariaId }) {
 
 export default function PetPublic() {
   const { id } = useParams()
+  const navigate = useNavigate()
   const { user } = useAuth()
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -205,6 +207,8 @@ export default function PetPublic() {
   const [atencionModal, setAtencionModal] = useState(false)
   const [petModal, setPetModal] = useState(false)
   const [qrModal, setQrModal] = useState(false)
+  // id de atención en confirmación, o 'pet' para eliminar el paciente
+  const [confirming, setConfirming] = useState(null)
 
   async function refresh() {
     const result = await getPetWithVeterinaria(id)
@@ -236,9 +240,14 @@ export default function PetPublic() {
   }, [id, user])
 
   async function handleDeleteAtencion(atId) {
-    if (!window.confirm('¿Eliminar esta atención del historial?')) return
     await deleteAtencion(atId)
     setAtenciones((prev) => prev.filter((a) => a.id !== atId))
+    setConfirming(null)
+  }
+
+  async function handleDeletePet() {
+    await deletePet(pet.id)
+    navigate('/panel')
   }
 
   if (loading) {
@@ -364,6 +373,32 @@ export default function PetPublic() {
               >
                 <QrCode className="h-4 w-4" /> Ver QR
               </button>
+              {confirming === 'pet' ? (
+                <span className="inline-flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={handleDeletePet}
+                    className="inline-flex items-center gap-1.5 rounded-full bg-status-perdido px-4 py-2 text-sm font-extrabold text-white transition hover:brightness-110"
+                  >
+                    <Trash2 className="h-4 w-4" /> Sí, eliminar
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setConfirming(null)}
+                    className="rounded-full border-2 border-stone-200 px-4 py-2 text-sm font-extrabold text-stone-500"
+                  >
+                    No
+                  </button>
+                </span>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setConfirming('pet')}
+                  className="inline-flex items-center gap-1.5 rounded-full border-2 border-stone-200 px-4 py-2 text-sm font-extrabold text-stone-400 transition hover:border-status-perdido hover:text-status-perdido"
+                >
+                  <Trash2 className="h-4 w-4" /> Eliminar
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -426,14 +461,33 @@ export default function PetPublic() {
                     {formatFecha(a.fecha)}
                   </span>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => handleDeleteAtencion(a.id)}
-                  className="p-1.5 text-stone-300 transition hover:text-status-perdido"
-                  aria-label="Eliminar atención"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </button>
+                {confirming === a.id ? (
+                  <span className="flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteAtencion(a.id)}
+                      className="rounded-full bg-status-perdido px-3 py-1 text-xs font-extrabold text-white transition hover:brightness-110"
+                    >
+                      Sí, eliminar
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setConfirming(null)}
+                      className="rounded-full border border-stone-200 px-3 py-1 text-xs font-extrabold text-stone-500"
+                    >
+                      No
+                    </button>
+                  </span>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setConfirming(a.id)}
+                    className="p-1.5 text-stone-300 transition hover:text-status-perdido"
+                    aria-label="Eliminar atención"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                )}
               </div>
               <h3 className="mt-2 font-extrabold text-stone-900">{a.titulo}</h3>
               {a.detalle && (
