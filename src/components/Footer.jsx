@@ -70,6 +70,7 @@ export default function Footer() {
         <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-2 px-4 py-5 text-xs text-stone-500 sm:flex-row sm:px-6">
           <span>© 2026 Patitas</span>
           <span>Hecho con amor para proteger a cada peludo</span>
+          <span>Hecha por Facundo Dicroce</span>
         </div>
       </div>
     </footer>
