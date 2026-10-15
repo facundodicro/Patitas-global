@@ -28,12 +28,22 @@ function GoogleMark({ className = 'h-5 w-5' }) {
 }
 
 export default function Login() {
-  const { user, loading, signUp, signIn, signInWithGoogle } = useAuth()
+  const {
+    user,
+    loading,
+    signUp,
+    signIn,
+    signInWithGoogle,
+    recoveryMode,
+    resetPassword,
+    updatePassword,
+  } = useAuth()
   const location = useLocation()
   const navigate = useNavigate()
   const [tab, setTab] = useState('ingresar')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [password2, setPassword2] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
@@ -46,9 +56,92 @@ export default function Login() {
     )
   }
 
+  /* El usuario abrió el enlace de recuperación del email: pedir nueva contraseña */
+  if (recoveryMode) {
+    return (
+      <div className="mx-auto max-w-md animate-fade-up px-4 py-12">
+        <div className="rounded-3xl bg-white p-8 shadow-card">
+          <div className="mb-6 flex justify-center">
+            <Logo />
+          </div>
+          <h1 className="text-center text-2xl font-extrabold text-stone-900">
+            Nueva contraseña
+          </h1>
+          <p className="mt-2 text-center text-sm text-stone-500">
+            Elegí una contraseña nueva para tu cuenta.
+          </p>
+          <form
+            onSubmit={async (e) => {
+              e.preventDefault()
+              setError('')
+              setSuccess('')
+              if (password !== password2) {
+                setError('Las contraseñas no coinciden.')
+                return
+              }
+              setSubmitting(true)
+              try {
+                await updatePassword(password)
+                setSuccess('¡Contraseña actualizada! Ya podés ingresar.')
+                setTimeout(() => navigate('/panel', { replace: true }), 1200)
+              } catch (err) {
+                setError(err.message || 'No pudimos actualizarla. Probá de nuevo.')
+              } finally {
+                setSubmitting(false)
+              }
+            }}
+            className="mt-6 space-y-4"
+          >
+            <div>
+              <label htmlFor="new-password" className="mb-1 block text-sm font-bold text-stone-700">
+                Nueva contraseña
+              </label>
+              <input
+                id="new-password"
+                type="password"
+                required
+                minLength={6}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full rounded-xl border border-stone-300 px-4 py-2.5 outline-none transition focus:border-brand focus:ring-2 focus:ring-brand-soft"
+                placeholder="Mínimo 6 caracteres"
+              />
+            </div>
+            <div>
+              <label htmlFor="new-password2" className="mb-1 block text-sm font-bold text-stone-700">
+                Repetila
+              </label>
+              <input
+                id="new-password2"
+                type="password"
+                required
+                minLength={6}
+                value={password2}
+                onChange={(e) => setPassword2(e.target.value)}
+                className="w-full rounded-xl border border-stone-300 px-4 py-2.5 outline-none transition focus:border-brand focus:ring-2 focus:ring-brand-soft"
+              />
+            </div>
+            {error && <p className="text-sm font-bold text-status-perdido">{error}</p>}
+            {success && <p className="text-sm font-bold text-brand">{success}</p>}
+            <button
+              type="submit"
+              disabled={submitting}
+              className="flex w-full items-center justify-center gap-2 rounded-full bg-brand px-6 py-3 font-extrabold text-white transition hover:bg-brand-dark disabled:opacity-60"
+            >
+              {submitting && <Loader2 className="h-5 w-5 animate-spin" />}
+              Guardar contraseña
+            </button>
+          </form>
+        </div>
+      </div>
+    )
+  }
+
   if (user) {
     return <Navigate to={location.state?.from || '/panel'} replace />
   }
+
+  const isRecover = tab === 'recuperar'
 
   async function handleSubmit(e) {
     e.preventDefault()
@@ -56,7 +149,10 @@ export default function Login() {
     setSuccess('')
     setSubmitting(true)
     try {
-      if (tab === 'ingresar') {
+      if (isRecover) {
+        await resetPassword(email)
+        setSuccess('Te enviamos un email con el enlace para crear una contraseña nueva.')
+      } else if (tab === 'ingresar') {
         const { error: err } = await signIn(email, password)
         if (err) throw err
       } else {
@@ -64,7 +160,7 @@ export default function Login() {
         if (err) throw err
         setSuccess('¡Cuenta creada! Ya podés usar Patitas.')
       }
-      navigate(location.state?.from || '/panel', { replace: true })
+      if (!isRecover) navigate(location.state?.from || '/panel', { replace: true })
     } catch (err) {
       setError(err.message || 'Ocurrió un error. Probá de nuevo.')
     } finally {
@@ -90,20 +186,26 @@ export default function Login() {
           <Logo />
         </div>
 
-        <div className="mb-6 grid grid-cols-2 rounded-full bg-stone-100 p-1">
-          {['ingresar', 'crear'].map((t) => (
-            <button
-              key={t}
-              type="button"
-              onClick={() => { setTab(t); setError(''); setSuccess('') }}
-              className={`rounded-full py-2 text-sm font-extrabold transition ${
-                tab === t ? 'bg-white text-stone-900 shadow' : 'text-stone-500'
-              }`}
-            >
-              {t === 'ingresar' ? 'Ingresar' : 'Crear cuenta'}
-            </button>
-          ))}
-        </div>
+        {isRecover ? (
+          <p className="mb-6 text-center text-sm text-stone-500">
+            Ingresá tu email y te enviamos un enlace para crear una contraseña nueva.
+          </p>
+        ) : (
+          <div className="mb-6 grid grid-cols-2 rounded-full bg-stone-100 p-1">
+            {['ingresar', 'crear'].map((t) => (
+              <button
+                key={t}
+                type="button"
+                onClick={() => { setTab(t); setError(''); setSuccess('') }}
+                className={`rounded-full py-2 text-sm font-extrabold transition ${
+                  tab === t ? 'bg-white text-stone-900 shadow' : 'text-stone-500'
+                }`}
+              >
+                {t === 'ingresar' ? 'Ingresar' : 'Crear cuenta'}
+              </button>
+            ))}
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
@@ -120,21 +222,32 @@ export default function Login() {
               placeholder="tu@email.com"
             />
           </div>
-          <div>
-            <label htmlFor="password" className="mb-1 block text-sm font-bold text-stone-700">
-              Contraseña
-            </label>
-            <input
-              id="password"
-              type="password"
-              required
-              minLength={6}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full rounded-xl border border-stone-300 px-4 py-2.5 outline-none transition focus:border-brand focus:ring-2 focus:ring-brand-soft"
-              placeholder="Mínimo 6 caracteres"
-            />
-          </div>
+          {!isRecover && (
+            <div>
+              <label htmlFor="password" className="mb-1 block text-sm font-bold text-stone-700">
+                Contraseña
+              </label>
+              <input
+                id="password"
+                type="password"
+                required
+                minLength={6}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full rounded-xl border border-stone-300 px-4 py-2.5 outline-none transition focus:border-brand focus:ring-2 focus:ring-brand-soft"
+                placeholder="Mínimo 6 caracteres"
+              />
+              {tab === 'ingresar' && (
+                <button
+                  type="button"
+                  onClick={() => { setTab('recuperar'); setError(''); setSuccess('') }}
+                  className="mt-2 text-sm font-bold text-brand hover:underline"
+                >
+                  ¿Olvidaste tu contraseña?
+                </button>
+              )}
+            </div>
+          )}
 
           {error && <p className="text-sm font-bold text-status-perdido">{error}</p>}
           {success && <p className="text-sm font-bold text-brand">{success}</p>}
@@ -145,8 +258,18 @@ export default function Login() {
             className="flex w-full items-center justify-center gap-2 rounded-full bg-brand px-6 py-3 font-extrabold text-white transition hover:bg-brand-dark disabled:opacity-60"
           >
             {submitting && <Loader2 className="h-5 w-5 animate-spin" />}
-            {tab === 'ingresar' ? 'Ingresar' : 'Crear cuenta'}
+            {isRecover ? 'Enviar enlace' : tab === 'ingresar' ? 'Ingresar' : 'Crear cuenta'}
           </button>
+
+          {isRecover && (
+            <button
+              type="button"
+              onClick={() => { setTab('ingresar'); setError(''); setSuccess('') }}
+              className="w-full text-center text-sm font-bold text-stone-500 hover:underline"
+            >
+              Volver a ingresar
+            </button>
+          )}
         </form>
 
         <div className="my-6 flex items-center gap-3 text-sm text-stone-400">

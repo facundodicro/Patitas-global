@@ -12,6 +12,7 @@ const LS_AUTH = 'patitas_demo_auth'
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [recoveryMode, setRecoveryMode] = useState(false)
 
   useEffect(() => {
     if (isSupabaseConfigured) {
@@ -19,8 +20,9 @@ export function AuthProvider({ children }) {
         setUser(data.session?.user ?? null)
         setLoading(false)
       })
-      const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
+      const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
         setUser(session?.user ?? null)
+        setRecoveryMode(event === 'PASSWORD_RECOVERY')
       })
       return () => sub.subscription.unsubscribe()
     }
@@ -100,9 +102,41 @@ export function AuthProvider({ children }) {
 
   const isAdmin = Boolean(user?.email && adminEmails.includes(user.email.toLowerCase()))
 
+  /** Envía el email de recuperación de contraseña. */
+  const resetPassword = useCallback(async (email) => {
+    if (!isSupabaseConfigured) {
+      throw new Error('La recuperación no está disponible en modo demo.')
+    }
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/ingresar`,
+    })
+    if (error) throw error
+  }, [])
+
+  /** Define la nueva contraseña tras abrir el enlace de recuperación. */
+  const updatePassword = useCallback(async (newPassword) => {
+    if (!isSupabaseConfigured) {
+      throw new Error('La recuperación no está disponible en modo demo.')
+    }
+    const { error } = await supabase.auth.updateUser({ password: newPassword })
+    if (error) throw error
+    setRecoveryMode(false)
+  }, [])
+
   return (
     <AuthContext.Provider
-      value={{ user, loading, signUp, signIn, signInWithGoogle, signOut, isAdmin }}
+      value={{
+        user,
+        loading,
+        signUp,
+        signIn,
+        signInWithGoogle,
+        signOut,
+        isAdmin,
+        recoveryMode,
+        resetPassword,
+        updatePassword,
+      }}
     >
       {children}
     </AuthContext.Provider>
