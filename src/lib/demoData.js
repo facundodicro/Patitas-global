@@ -1,9 +1,5 @@
 /** Datos de ejemplo para el modo demo (sin Supabase configurado). */
 
-/** Centro y zoom por defecto del mapa: vista mundial */
-export const DEFAULT_MAP_CENTER = [20, 0]
-export const DEFAULT_MAP_ZOOM = 3
-
 const now = Date.now()
 const daysAgo = (n) => new Date(now - n * 24 * 60 * 60 * 1000).toISOString()
 
@@ -59,82 +55,88 @@ export const seedReports = [
     lng: -3.7038,
     created_at: daysAgo(4),
   },
+]
+
+/**
+ * Veterinaria de ejemplo. En modo demo, ingresar con el email vete@demo.com
+ * muestra este consultorio ya cargado (ver getMyVeterinaria en store.js).
+ */
+export const seedVeterinarias = [
   {
-    id: 'demo-report-toby',
-    tipo: 'encontrada',
-    nombre: 'Toby',
-    especie: 'Perro',
-    raza: 'Beagle',
-    senas: 'Encontrado cerca del parque, sin collar. Bien cuidado.',
-    recompensa: null,
-    zona: 'Chapinero, Bogotá',
-    fecha: daysAgo(1).slice(0, 10),
-    telefono: '573000000004',
-    foto_url: null,
-    estado: 'encontrada',
-    lat: 4.711,
-    lng: -74.0721,
-    created_at: daysAgo(1),
-  },
-  {
-    id: 'demo-report-simba',
-    tipo: 'encontrada',
-    nombre: 'Simba',
-    especie: 'Gato',
-    raza: 'Naranja común',
-    senas: 'Gato naranja de pelo corto, apareció en un patio del centro.',
-    recompensa: null,
-    zona: 'Providencia, Santiago',
-    fecha: daysAgo(3).slice(0, 10),
-    telefono: '569000000005',
-    foto_url: null,
-    estado: 'encontrada',
-    lat: -33.4489,
-    lng: -70.6693,
-    created_at: daysAgo(3),
-  },
-  {
-    id: 'demo-report-bella',
-    tipo: 'perdida',
-    nombre: 'Bella',
-    especie: 'Perro',
-    raza: 'Caniche',
-    senas: 'Caniche blanca chiquita. Ya fue reunida con su familia.',
-    recompensa: null,
-    zona: 'Miraflores, Lima',
-    fecha: daysAgo(9).slice(0, 10),
-    telefono: '519000000006',
-    foto_url: null,
-    estado: 'en_casa',
-    lat: -12.0464,
-    lng: -77.0428,
-    created_at: daysAgo(9),
+    id: 'demo-vet-1',
+    user_id: 'demo-user-vete@demo.com',
+    nombre: 'Veterinaria Huellas',
+    whatsapp: '5492262000000',
+    direccion: 'Av. 58 1234, Necochea',
+    logo_url: null,
+    created_at: daysAgo(60),
   },
 ]
 
-/** Mascotas de ejemplo para la ficha pública en modo demo */
+/** Pacientes de ejemplo de la veterinaria demo */
 export const seedPets = [
   {
     id: 'demo-pet-coco',
-    owner_id: 'demo-owner',
+    veterinaria_id: 'demo-vet-1',
     nombre: 'Coco',
     especie: 'Perro',
     edad: '3 años',
-    senas: 'Pelo rizado marrón claro, collar verde con placa.',
+    senas: 'Pelo rizado marrón claro, collar verde con QR.',
     foto_url: null,
-    qr_destino: 'ficha',
+    dueno_nombre: 'Martina López',
+    dueno_whatsapp: '5492262111111',
     created_at: daysAgo(30),
+  },
+  {
+    id: 'demo-pet-michi',
+    veterinaria_id: 'demo-vet-1',
+    nombre: 'Michi',
+    especie: 'Gato',
+    edad: '1 año',
+    senas: 'Atigrado gris, muy tranquilo.',
+    foto_url: null,
+    dueno_nombre: 'Diego Fernández',
+    dueno_whatsapp: '5492262222222',
+    created_at: daysAgo(20),
   },
 ]
 
-export const seedOwnerProfiles = {
-  'demo-owner': {
-    id: 'demo-owner',
-    nombre: 'Dueño de ejemplo',
-    telefono: '5491100000000',
-    email: 'ejemplo@patitas.app',
-    zona: 'Palermo, Buenos Aires',
+/** Historial de atenciones de ejemplo */
+export const seedAtenciones = [
+  {
+    id: 'demo-at-1',
+    mascota_id: 'demo-pet-coco',
+    veterinaria_id: 'demo-vet-1',
+    fecha: daysAgo(30).slice(0, 10),
+    tipo: 'vacuna',
+    titulo: 'Vacuna antirrábica',
+    detalle: 'Dosis anual. Sin reacciones adversas.',
+    proxima_fecha: new Date(now + 335 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10),
+    notas: '',
+    created_at: daysAgo(30),
   },
-}
-
-export const seedAds = []
+  {
+    id: 'demo-at-2',
+    mascota_id: 'demo-pet-coco',
+    veterinaria_id: 'demo-vet-1',
+    fecha: daysAgo(10).slice(0, 10),
+    tipo: 'visita',
+    titulo: 'Control general',
+    detalle: 'Peso 12,4 kg. Buen estado general, mucosas rosadas.',
+    proxima_fecha: null,
+    notas: 'Volver en 6 meses para control.',
+    created_at: daysAgo(10),
+  },
+  {
+    id: 'demo-at-3',
+    mascota_id: 'demo-pet-michi',
+    veterinaria_id: 'demo-vet-1',
+    fecha: daysAgo(5).slice(0, 10),
+    tipo: 'tratamiento',
+    titulo: 'Desparasitación interna',
+    detalle: 'Comprimido antiparasitario. Repetir en 3 meses.',
+    proxima_fecha: new Date(now + 85 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10),
+    notas: '',
+    created_at: daysAgo(5),
+  },
+]

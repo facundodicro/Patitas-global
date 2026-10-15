@@ -1,17 +1,20 @@
 /**
- * Capa de datos de Patitas.
+ * Capa de datos de Patitas (versión veterinarias).
  *
  * Si hay credenciales de Supabase (VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY),
  * opera contra la base real. Si no, funciona en MODO DEMO: los datos viven en
  * memoria + localStorage y todo el flujo se puede probar igual.
+ *
+ * Modelo: cada veterinaria (ligada a un usuario de Supabase Auth) tiene sus
+ * pacientes (pets.veterinaria_id) y su historial de atenciones.
  */
 import { supabase, isSupabaseConfigured } from './supabase'
-import { seedReports, seedPets, seedOwnerProfiles, seedAds } from './demoData'
+import { seedReports, seedPets, seedVeterinarias, seedAtenciones } from './demoData'
 import { resizeImage, blobToDataURL } from './image'
 
 export const DEMO_MODE = !isSupabaseConfigured
 
-const LS_KEY = 'patitas_demo_v1'
+const LS_KEY = 'patitas_demo_v2'
 
 function loadDemo() {
   try {
@@ -21,8 +24,8 @@ function loadDemo() {
       return {
         reports: parsed.reports ?? seedReports,
         pets: parsed.pets ?? seedPets,
-        profiles: parsed.profiles ?? seedOwnerProfiles,
-        ads: parsed.ads ?? seedAds,
+        veterinarias: parsed.veterinarias ?? seedVeterinarias,
+        atenciones: parsed.atenciones ?? seedAtenciones,
       }
     }
   } catch {
@@ -31,8 +34,8 @@ function loadDemo() {
   return {
     reports: [...seedReports],
     pets: [...seedPets],
-    profiles: { ...seedOwnerProfiles },
-    ads: [...seedAds],
+    veterinarias: [...seedVeterinarias],
+    atenciones: [...seedAtenciones],
   }
 }
 
@@ -122,7 +125,7 @@ export async function updateReport(id, data) {
   return r
 }
 
-/** Elimina un reporte (solo el dueño o un admin, según las políticas RLS). */
+/** Elimina un reporte (según las políticas RLS). */
 export async function deleteReport(id) {
   if (!DEMO_MODE) {
     const { error } = await supabase.from('reports').delete().eq('id', id)
@@ -133,23 +136,100 @@ export async function deleteReport(id) {
   saveDemo()
 }
 
+/* ---------------------------- VETERINARIAS ------------------------------ */
+
+/** La veterinaria del usuario logueado (una por cuenta). */
+export async function getMyVeterinaria(userId) {
+  if (!DEMO_MODE) {
+    const { data, error } = await supabase
+      .from('veterinarias')
+      .select('*')
+      .eq('user_id', userId)
+      .maybeSingle()
+    if (error) throw error
+    return data
+  }
+  return demo.veterinarias.find((v) => v.user_id === userId) ?? null
+}
+
+/** Una veterinaria por id (para la ficha pública). */
+export async function getVeterinaria(id) {
+  if (!DEMO_MODE) {
+    const { data, error } = await supabase
+      .from('veterinarias')
+      .select('*')
+      .eq('id', id)
+      .single()
+    if (error) throw error
+    return data
+  }
+  return demo.veterinarias.find((v) => v.id === id) ?? null
+}
+
+/** Registra la veterinaria del usuario. */
+export async function createVeterinaria(userId, { nombre, whatsapp, direccion, logo_url }) {
+  if (!DEMO_MODE) {
+    const { data: row, error } = await supabase
+      .from('veterinarias')
+      .insert({ user_id: userId, nombre, whatsapp, direccion, logo_url })
+      .select()
+      .single()
+    if (error) throw error
+    return row
+  }
+  const row = {
+    id: uid('vet'),
+    user_id: userId,
+    nombre,
+    whatsapp,
+    direccion: direccion || null,
+    logo_url: logo_url || null,
+    created_at: new Date().toISOString(),
+  }
+  demo.veterinarias.push(row)
+  saveDemo()
+  return row
+}
+
+/** Actualiza los datos de la veterinaria. */
+export async function updateVeterinaria(id, data) {
+  if (!DEMO_MODE) {
+    const { data: row, error } = await supabase
+      .from('veterinarias')
+      .update(data)
+      .eq('id', id)
+      .select()
+      .single()
+    if (error) throw error
+    return row
+  }
+  const v = demo.veterinarias.find((x) => x.id === id)
+  if (v) {
+    Object.assign(v, data)
+    saveDemo()
+  }
+  return v
+}
+
 /* -------------------------------- MASCOTAS ------------------------------ */
 
-/** Mascotas del dueño indicado. */
-export async function listMyPets(ownerId) {
+/** Pacientes de la veterinaria indicada. */
+export async function listVetPets(veterinariaId) {
   if (!DEMO_MODE) {
     const { data, error } = await supabase
       .from('pets')
       .select('*')
-      .eq('owner_id', ownerId)
+      .eq('veterinaria_id', veterinariaId)
       .order('created_at', { ascending: false })
     if (error) throw error
     return data
   }
-  return demo.pets.filter((p) => p.owner_id === ownerId).sort(byCreatedDesc)
+  return demo.pets
+    .filter((p) => p.veterinaria_id === veterinariaId)
+    .sort(byCreatedDesc)
 }
 
-/** Una mascota por id (para la ficha pública). */
+/** Una mascota por id. */
 export async function getPet(id) {
   if (!DEMO_MODE) {
     const { data, error } = await supabase.from('pets').select('*').eq('id', id).single()
@@ -159,19 +239,32 @@ export async function getPet(id) {
   return demo.pets.find((p) => p.id === id) ?? null
 }
 
-/** Mascota + datos públicos del dueño (para la ficha pública /m/:id). */
-export async function getPetWithOwner(id) {
+/** Mascota + su veterinaria (para la ficha /m/:id). */
+export async function getPetWithVeterinaria(id) {
   const pet = await getPet(id)
   if (!pet) return null
-  const owner = await getProfile(pet.owner_id)
-  return { pet, owner }
+  const veterinaria = pet.veterinaria_id ? await getVeterinaria(pet.veterinaria_id) : null
+  return { pet, veterinaria }
 }
 
-export async function createPet(ownerId, data) {
+/** Registra un paciente de la veterinaria. */
+export async function createPet(
+  veterinariaId,
+  { nombre, especie, edad, senas, foto_url, dueno_nombre, dueno_whatsapp },
+) {
   if (!DEMO_MODE) {
     const { data: row, error } = await supabase
       .from('pets')
-      .insert({ ...data, owner_id: ownerId })
+      .insert({
+        veterinaria_id: veterinariaId,
+        nombre,
+        especie,
+        edad,
+        senas,
+        foto_url,
+        dueno_nombre,
+        dueno_whatsapp,
+      })
       .select()
       .single()
     if (error) throw error
@@ -179,10 +272,15 @@ export async function createPet(ownerId, data) {
   }
   const row = {
     id: uid('pet'),
-    owner_id: ownerId,
+    veterinaria_id: veterinariaId,
+    nombre,
+    especie,
+    edad: edad || null,
+    senas: senas || null,
+    foto_url: foto_url || null,
+    dueno_nombre: dueno_nombre || null,
+    dueno_whatsapp: dueno_whatsapp || null,
     created_at: new Date().toISOString(),
-    qr_destino: 'ficha',
-    ...data,
   }
   demo.pets.unshift(row)
   saveDemo()
@@ -209,40 +307,89 @@ export async function deletePet(id) {
     return
   }
   demo.pets = demo.pets.filter((p) => p.id !== id)
+  demo.atenciones = demo.atenciones.filter((a) => a.mascota_id !== id)
   saveDemo()
 }
 
-/* -------------------------------- PERFILES ------------------------------ */
+/* ------------------------------ ATENCIONES ------------------------------ */
 
-export async function getProfile(userId) {
+const byFechaDesc = (a, b) => new Date(b.fecha) - new Date(a.fecha)
+
+/** Historial de atenciones de una mascota, más recientes primero. */
+export async function listAtenciones(mascotaId) {
   if (!DEMO_MODE) {
     const { data, error } = await supabase
-      .from('profiles')
+      .from('atenciones')
       .select('*')
-      .eq('id', userId)
-      .maybeSingle()
+      .eq('mascota_id', mascotaId)
+      .order('fecha', { ascending: false })
     if (error) throw error
     return data
   }
-  return demo.profiles[userId] ?? null
+  return demo.atenciones.filter((a) => a.mascota_id === mascotaId).sort(byFechaDesc)
 }
 
-export async function upsertProfile(userId, data) {
+/** Registra una atención (vacuna, tratamiento, visita, cirugía u otro). */
+export async function createAtencion({
+  mascota_id,
+  veterinaria_id,
+  fecha,
+  tipo,
+  titulo,
+  detalle,
+  proxima_fecha,
+  notas,
+}) {
   if (!DEMO_MODE) {
-    const { error } = await supabase
-      .from('profiles')
-      .upsert({ id: userId, ...data }, { onConflict: 'id' })
+    const { data: row, error } = await supabase
+      .from('atenciones')
+      .insert({
+        mascota_id,
+        veterinaria_id,
+        fecha,
+        tipo,
+        titulo,
+        detalle,
+        proxima_fecha: proxima_fecha || null,
+        notas: notas || null,
+      })
+      .select()
+      .single()
+    if (error) throw error
+    return row
+  }
+  const row = {
+    id: uid('at'),
+    mascota_id,
+    veterinaria_id,
+    fecha,
+    tipo,
+    titulo,
+    detalle: detalle || null,
+    proxima_fecha: proxima_fecha || null,
+    notas: notas || null,
+    created_at: new Date().toISOString(),
+  }
+  demo.atenciones.unshift(row)
+  saveDemo()
+  return row
+}
+
+/** Elimina una atención del historial. */
+export async function deleteAtencion(id) {
+  if (!DEMO_MODE) {
+    const { error } = await supabase.from('atenciones').delete().eq('id', id)
     if (error) throw error
     return
   }
-  demo.profiles[userId] = { id: userId, ...demo.profiles[userId], ...data }
+  demo.atenciones = demo.atenciones.filter((a) => a.id !== id)
   saveDemo()
 }
 
 /* --------------------------------- FOTOS -------------------------------- */
 
 /**
- * Sube la foto de una mascota y devuelve su URL.
+ * Sube una foto (mascota o logo de veterinaria) y devuelve su URL.
  * En Supabase: bucket "pet-photos". En demo: dataURL redimensionada.
  */
 export async function uploadPetPhoto(file) {
@@ -258,60 +405,4 @@ export async function uploadPetPhoto(file) {
     return data.publicUrl
   }
   return blobToDataURL(resized)
-}
-
-/* ------------------------------- PUBLICIDAD ----------------------------- */
-
-export async function listAds() {
-  if (!DEMO_MODE) {
-    const { data, error } = await supabase
-      .from('ads')
-      .select('*')
-      .order('created_at', { ascending: false })
-    if (error) throw error
-    return data
-  }
-  return [...demo.ads].sort(byCreatedDesc)
-}
-
-export async function createAd(data) {
-  if (!DEMO_MODE) {
-    const { data: row, error } = await supabase.from('ads').insert(data).select().single()
-    if (error) throw error
-    return row
-  }
-  const row = { id: uid('ad'), created_at: new Date().toISOString(), ...data }
-  demo.ads.unshift(row)
-  saveDemo()
-  return row
-}
-
-export async function deleteAd(id) {
-  if (!DEMO_MODE) {
-    const { error } = await supabase.from('ads').delete().eq('id', id)
-    if (error) throw error
-    return
-  }
-  demo.ads = demo.ads.filter((a) => a.id !== id)
-  saveDemo()
-}
-
-/** Actualiza una publicidad. Devuelve el registro actualizado. */
-export async function updateAd(id, data) {
-  if (!DEMO_MODE) {
-    const { data: row, error } = await supabase
-      .from('ads')
-      .update(data)
-      .eq('id', id)
-      .select()
-      .single()
-    if (error) throw error
-    return row
-  }
-  const a = demo.ads.find((x) => x.id === id)
-  if (a) {
-    Object.assign(a, data)
-    saveDemo()
-  }
-  return a
 }
