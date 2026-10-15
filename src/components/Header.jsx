@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
-import { ChevronDown, Download, LogOut, Menu, Settings, User, X } from 'lucide-react';
+import { ChevronDown, Download, LayoutDashboard, LogOut, Menu, User, X } from 'lucide-react';
 import Logo from './Logo';
 import InstallModal from './InstallModal';
 import { useAuth } from '../hooks/useAuth';
@@ -8,8 +8,6 @@ import { useAuth } from '../hooks/useAuth';
 const LINKS = [
   { to: '/', label: 'Inicio', end: true },
   { to: '/tablon', label: 'Tablón', end: false },
-  { to: '/#como-funciona', label: 'Cómo funciona', end: false },
-  { to: '/perfil', label: 'Mi perfil', end: false },
 ];
 
 function navClass({ isActive }) {
@@ -17,7 +15,7 @@ function navClass({ isActive }) {
 }
 
 export default function Header() {
-  const { user, isAdmin, signOut } = useAuth();
+  const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -73,21 +71,12 @@ export default function Header() {
                       {user.email}
                     </p>
                     <Link
-                      to="/perfil"
+                      to="/panel"
                       onClick={() => setDropdownOpen(false)}
                       className="flex items-center gap-2 px-4 py-2.5 text-sm text-stone-700 transition hover:bg-stone-50"
                     >
-                      <User className="h-4 w-4" /> Mi perfil
+                      <LayoutDashboard className="h-4 w-4" /> Mi panel
                     </Link>
-                    {isAdmin && (
-                      <Link
-                        to="/admin"
-                        onClick={() => setDropdownOpen(false)}
-                        className="flex items-center gap-2 px-4 py-2.5 text-sm text-stone-700 transition hover:bg-stone-50"
-                      >
-                        <Settings className="h-4 w-4" /> Administración
-                      </Link>
-                    )}
                     <button
                       type="button"
                       onClick={handleSignOut}
@@ -100,7 +89,7 @@ export default function Header() {
               </div>
             ) : (
               <Link
-                to="/ingresar"
+                to="/panel"
                 className="hidden md:inline-block rounded-full bg-brand px-5 py-2 text-sm font-bold text-white transition hover:bg-brand-light"
               >
                 Ingresar
@@ -134,15 +123,13 @@ export default function Header() {
               ))}
               {user ? (
                 <>
-                  {isAdmin && (
-                    <Link
-                      to="/admin"
-                      onClick={() => setMenuOpen(false)}
-                      className="rounded-xl px-3 py-2.5 text-sm font-medium text-stone-600"
-                    >
-                      Administración
-                    </Link>
-                  )}
+                  <Link
+                    to="/panel"
+                    onClick={() => setMenuOpen(false)}
+                    className="rounded-xl px-3 py-2.5 text-sm font-medium text-stone-600"
+                  >
+                    Mi panel
+                  </Link>
                   <button
                     type="button"
                     onClick={() => {
@@ -156,7 +143,7 @@ export default function Header() {
                 </>
               ) : (
                 <Link
-                  to="/ingresar"
+                  to="/panel"
                   onClick={() => setMenuOpen(false)}
                   className="mt-2 rounded-full bg-brand px-5 py-2.5 text-center text-sm font-bold text-white"
                 >

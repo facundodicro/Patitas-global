@@ -1,15 +1,15 @@
 import { useRef, useState } from 'react'
 import { X, Camera, Loader2 } from 'lucide-react'
 import { createPet, updatePet, uploadPetPhoto } from '../lib/store'
-import { QR_DESTINOS } from '../lib/qr'
 
-export default function PetFormModal({ open, onClose, onSaved, pet, ownerId }) {
+export default function PetFormModal({ open, onClose, onSaved, pet, veterinariaId }) {
   const isEdit = !!pet
   const [nombre, setNombre] = useState(pet?.nombre || '')
   const [especie, setEspecie] = useState(pet?.especie || 'Perro')
   const [edad, setEdad] = useState(pet?.edad || '')
   const [senas, setSenas] = useState(pet?.senas || '')
-  const [qrDestino, setQrDestino] = useState(pet?.qr_destino || 'ficha')
+  const [duenoNombre, setDuenoNombre] = useState(pet?.dueno_nombre || '')
+  const [duenoWhatsapp, setDuenoWhatsapp] = useState(pet?.dueno_whatsapp || '')
   const [file, setFile] = useState(null)
   const [preview, setPreview] = useState(pet?.foto_url || null)
   const [submitting, setSubmitting] = useState(false)
@@ -30,7 +30,11 @@ export default function PetFormModal({ open, onClose, onSaved, pet, ownerId }) {
     e.preventDefault()
     setError('')
     if (!nombre.trim()) {
-      setError('Poné el nombre de tu mascota.')
+      setError('Poné el nombre de la mascota.')
+      return
+    }
+    if (!duenoNombre.trim()) {
+      setError('Poné el nombre del dueño.')
       return
     }
     setSubmitting(true)
@@ -43,9 +47,12 @@ export default function PetFormModal({ open, onClose, onSaved, pet, ownerId }) {
         edad: edad.trim(),
         senas: senas.trim(),
         foto_url,
-        qr_destino: qrDestino,
+        dueno_nombre: duenoNombre.trim(),
+        dueno_whatsapp: duenoWhatsapp.trim(),
       }
-      const saved = isEdit ? await updatePet(pet.id, data) : await createPet(ownerId, data)
+      const saved = isEdit
+        ? await updatePet(pet.id, data)
+        : await createPet(veterinariaId, data)
       onSaved?.(saved)
       onClose()
     } catch (err) {
@@ -70,7 +77,7 @@ export default function PetFormModal({ open, onClose, onSaved, pet, ownerId }) {
       >
         <div className="flex items-center justify-between mb-5">
           <h2 className="text-xl font-extrabold text-stone-900">
-            {isEdit ? 'Editar mascota' : 'Registrar mascota'}
+            {isEdit ? 'Editar paciente' : 'Registrar mascota'}
           </h2>
           <button
             type="button"
@@ -84,7 +91,7 @@ export default function PetFormModal({ open, onClose, onSaved, pet, ownerId }) {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className={labelCls}>Nombre *</label>
+            <label className={labelCls}>Nombre de la mascota *</label>
             <input
               className={inputCls}
               value={nombre}
@@ -150,22 +157,29 @@ export default function PetFormModal({ open, onClose, onSaved, pet, ownerId }) {
             )}
           </div>
 
-          <div>
-            <label className={labelCls}>Destino del QR</label>
-            <select
-              className={inputCls}
-              value={qrDestino}
-              onChange={(e) => setQrDestino(e.target.value)}
-            >
-              {QR_DESTINOS.map((d) => (
-                <option key={d.value} value={d.value}>
-                  {d.label}
-                </option>
-              ))}
-            </select>
-            <p className="mt-1.5 text-xs text-stone-500">
-              {QR_DESTINOS.find((d) => d.value === qrDestino)?.hint}
-            </p>
+          <div className="rounded-2xl bg-stone-50 p-4 space-y-4">
+            <h3 className="text-sm font-extrabold uppercase tracking-wide text-stone-500">
+              Dueño
+            </h3>
+            <div>
+              <label className={labelCls}>Nombre del dueño *</label>
+              <input
+                className={inputCls}
+                value={duenoNombre}
+                onChange={(e) => setDuenoNombre(e.target.value)}
+                placeholder="Ej: María González"
+                required
+              />
+            </div>
+            <div>
+              <label className={labelCls}>WhatsApp del dueño</label>
+              <input
+                className={inputCls}
+                value={duenoWhatsapp}
+                onChange={(e) => setDuenoWhatsapp(e.target.value)}
+                placeholder="Ej: 5492262000000"
+              />
+            </div>
           </div>
 
           {error && (
@@ -180,7 +194,7 @@ export default function PetFormModal({ open, onClose, onSaved, pet, ownerId }) {
             className="w-full rounded-xl bg-brand hover:bg-brand-light text-white font-extrabold py-3 text-base shadow-card transition disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
             {submitting && <Loader2 className="h-5 w-5 animate-spin" />}
-            {submitting ? 'Guardando…' : 'Guardar y generar QR'}
+            {submitting ? 'Guardando…' : isEdit ? 'Guardar cambios' : 'Registrar y generar QR'}
           </button>
         </form>
       </div>

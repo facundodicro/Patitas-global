@@ -47,7 +47,7 @@ export default function Login() {
   }
 
   if (user) {
-    return <Navigate to={location.state?.from || '/perfil'} replace />
+    return <Navigate to={location.state?.from || '/panel'} replace />
   }
 
   async function handleSubmit(e) {
@@ -64,7 +64,7 @@ export default function Login() {
         if (err) throw err
         setSuccess('¡Cuenta creada! Ya podés usar Patitas.')
       }
-      navigate(location.state?.from || '/perfil', { replace: true })
+      navigate(location.state?.from || '/panel', { replace: true })
     } catch (err) {
       setError(err.message || 'Ocurrió un error. Probá de nuevo.')
     } finally {

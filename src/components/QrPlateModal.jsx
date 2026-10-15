@@ -3,7 +3,8 @@ import { X, Download, Printer, Link2, AlertTriangle, Check } from 'lucide-react'
 import Logo, { PawMark } from './Logo'
 import { buildQrContent, qrDataURL } from '../lib/qr'
 
-export default function QrPlateModal({ open, onClose, pet, ownerPhone }) {
+export default function QrPlateModal({ open, onClose, pet, ownerPhone, contactLabel }) {
+  const waLabel = contactLabel || 'Avisá a mi dueño por WhatsApp'
   const [qrImg, setQrImg] = useState(null)
   const [copied, setCopied] = useState(false)
   const [content, setContent] = useState('')
@@ -137,7 +138,7 @@ export default function QrPlateModal({ open, onClose, pet, ownerPhone }) {
     // pie
     ctx.fillStyle = '#57534E'
     ctx.font = "600 40px Nunito, sans-serif"
-    ctx.fillText('Avisá a mi dueño por WhatsApp', W / 2, 1230)
+    ctx.fillText(waLabel, W / 2, 1230)
     if (ownerPhone) {
       ctx.fillStyle = '#0F766E'
       ctx.font = "700 40px Nunito, sans-serif"
@@ -180,7 +181,7 @@ export default function QrPlateModal({ open, onClose, pet, ownerPhone }) {
       <div class="name">${pet.nombre}</div>
       ${qrImg ? `<img class="qr" src="${qrImg}" alt="QR">` : ''}
       <div class="scan">Si me perdí, escaneame</div>
-      <div class="wa">Avisá a mi dueño por WhatsApp</div>
+      <div class="wa">${waLabel}</div>
       ${ownerPhone ? `<div class="phone">${ownerPhone}</div>` : ''}
     </div>
   </div>
@@ -224,7 +225,7 @@ export default function QrPlateModal({ open, onClose, pet, ownerPhone }) {
         {!ownerPhone && (
           <div className="mb-4 flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-bold text-amber-800">
             <AlertTriangle className="h-4 w-4 mt-0.5 shrink-0" />
-            Agregá tu WhatsApp en Mi perfil para que el QR funcione.
+            Agregá el WhatsApp de tu veterinaria para que el QR funcione.
           </div>
         )}
 
@@ -252,7 +253,7 @@ export default function QrPlateModal({ open, onClose, pet, ownerPhone }) {
                 <img src={qrImg} alt="Código QR de la placa" className="mx-auto mt-3 w-48 h-48" />
               )}
               <p className="mt-3 font-bold text-stone-900">Si me perdí, escaneame</p>
-              <p className="text-sm text-stone-500 mt-1">Avisá a mi dueño por WhatsApp</p>
+              <p className="text-sm text-stone-500 mt-1">{waLabel}</p>
               {ownerPhone && <p className="font-extrabold text-brand">{ownerPhone}</p>}
             </div>
           </div>
