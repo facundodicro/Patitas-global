@@ -23,6 +23,7 @@ import {
   deletePet,
   getMyVeterinaria,
   getPetWithVeterinaria,
+  getPublicPetWithVeterinaria,
   listAtenciones,
 } from '../lib/store'
 import { waLink } from '../lib/qr'
@@ -211,17 +212,23 @@ export default function PetPublic() {
   const [confirming, setConfirming] = useState(null)
 
   async function refresh() {
-    const result = await getPetWithVeterinaria(id)
-    setData(result)
-    if (result?.pet) {
-      setAtenciones(await listAtenciones(result.pet.id))
+    // Datos públicos primero: nunca exponen al dueño
+    const pub = await getPublicPetWithVeterinaria(id)
+    if (!pub?.pet) {
+      setData(null)
+      return
     }
-    if (user && result?.pet?.veterinaria_id) {
+    // Si hay sesión, verificar si es la vete dueña para mostrar la ficha completa
+    let full = pub
+    let vet = false
+    if (user) {
       const mine = await getMyVeterinaria(user.id).catch(() => null)
-      setIsVet(!!mine && mine.id === result.pet.veterinaria_id)
-    } else {
-      setIsVet(false)
+      vet = !!mine && mine.id === pub.pet.veterinaria_id
+      if (vet) full = await getPetWithVeterinaria(id)
     }
+    setData(full)
+    setIsVet(vet)
+    setAtenciones(vet ? await listAtenciones(full.pet.id) : [])
   }
 
   useEffect(() => {

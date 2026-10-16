@@ -247,6 +247,27 @@ export async function getPetWithVeterinaria(id) {
   return { pet, veterinaria }
 }
 
+/** Mascota pública (sin datos del dueño) para el QR. */
+export async function getPublicPet(id) {
+  if (!DEMO_MODE) {
+    const { data, error } = await supabase.from('pets_public').select('*').eq('id', id).single()
+    if (error) throw error
+    return data
+  }
+  const p = demo.pets.find((x) => x.id === id) ?? null
+  if (!p) return null
+  const { dueno_nombre, dueno_whatsapp, owner_id, qr_destino, ...pub } = p
+  return pub
+}
+
+/** Mascota pública + su veterinaria (para la vista pública de /m/:id). */
+export async function getPublicPetWithVeterinaria(id) {
+  const pet = await getPublicPet(id)
+  if (!pet) return null
+  const veterinaria = pet.veterinaria_id ? await getVeterinaria(pet.veterinaria_id) : null
+  return { pet, veterinaria }
+}
+
 /** Registra un paciente de la veterinaria. */
 export async function createPet(
   veterinariaId,
