@@ -1,4 +1,5 @@
 import { Check, MessageCircle } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import Logo from './Logo';
 import { waLink } from '../lib/qr';
 import { DONATE_WHATSAPP } from '../lib/config';
@@ -46,6 +47,11 @@ export default function Footer() {
               >
                 Reportar un problema
               </a>
+            </li>
+            <li>
+              <Link to="/privacidad" className="text-stone-400 transition hover:text-white">
+                Política de Privacidad
+              </Link>
             </li>
             <li>
               <a

@@ -6,6 +6,7 @@ import QrScanner from './components/QrScanner'
 import Home from './pages/Home'
 import Tablon from './pages/Tablon'
 import PetPublic from './pages/PetPublic'
+import Privacy from './pages/Privacy'
 import Login from './pages/Login'
 import VetPanel from './pages/VetPanel'
 
@@ -39,6 +40,7 @@ export default function App() {
           <Route path="/m/:id" element={<PetPublic />} />
           <Route path="/ingresar" element={<Login />} />
           <Route path="/panel" element={<VetPanel />} />
+          <Route path="/privacidad" element={<Privacy />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>
