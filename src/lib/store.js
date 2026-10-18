@@ -416,9 +416,9 @@ export async function deleteAtencion(id) {
 export async function uploadPetPhoto(file) {
   const resized = await resizeImage(file, 900, 0.82)
   if (!DEMO_MODE) {
-    const path = `${uid('photo')}.jpg`
+    const path = `${uid('photo')}.webp`
     const { error } = await supabase.storage.from('pet-photos').upload(path, resized, {
-      contentType: 'image/jpeg',
+      contentType: 'image/webp',
       upsert: false,
     })
     if (error) throw error

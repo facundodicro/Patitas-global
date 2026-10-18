@@ -1,6 +1,7 @@
 /**
- * Redimensiona una imagen (File/Blob) a un JPEG liviano.
+ * Redimensiona una imagen (File/Blob) a un WebP liviano.
  * Se usa antes de subir fotos para no guardar archivos gigantes.
+ * "Compresor de fotos" de la app: todo lo que se sube pasa por acá.
  */
 export function resizeImage(file, maxDim = 900, quality = 0.82) {
   return new Promise((resolve, reject) => {
@@ -17,7 +18,7 @@ export function resizeImage(file, maxDim = 900, quality = 0.82) {
       canvas.getContext('2d').drawImage(img, 0, 0, w, h)
       canvas.toBlob(
         (blob) => (blob ? resolve(blob) : reject(new Error('No se pudo procesar la imagen'))),
-        'image/jpeg',
+        'image/webp',
         quality,
       )
     }
