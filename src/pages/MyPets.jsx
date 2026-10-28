@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Eye, Loader2, Pencil, Plus, QrCode } from 'lucide-react'
+import { Eye, Loader2, Pencil, Plus, QrCode, Trash2 } from 'lucide-react'
 import PetPhoto from '../components/PetPhoto'
 import EmptyState from '../components/EmptyState'
 import OwnerPetFormModal from '../components/OwnerPetFormModal'
 import QrPlateModal from '../components/QrPlateModal'
 import { useAuth } from '../hooks/useAuth'
-import { listMyPets } from '../lib/store'
+import { deletePet, listMyPets } from '../lib/store'
 
 function Spinner() {
   return (
@@ -18,7 +18,8 @@ function Spinner() {
 
 /**
  * Panel simple del dueño: sus mascotas registradas por él mismo
- * (origen 'dueno'). Listar, editar datos y volver a descargar el QR.
+ * (origen 'dueno'). Listar, editar datos, eliminar y volver a
+ * descargar el QR.
  * No incluye historial clínico: eso es parte del servicio de la
  * veterinaria (Fase 2).
  */
@@ -28,6 +29,8 @@ export default function MyPets() {
   const [loading, setLoading] = useState(true)
   const [editPet, setEditPet] = useState(null)
   const [qrPet, setQrPet] = useState(null)
+  const [confirmPet, setConfirmPet] = useState(null)
+  const [deleting, setDeleting] = useState(false)
   const [error, setError] = useState('')
 
   async function refresh() {
@@ -37,6 +40,19 @@ export default function MyPets() {
       setError('')
     } catch (err) {
       setError(err?.message || 'No pudimos cargar tus mascotas.')
+    }
+  }
+
+  async function handleDelete(pet) {
+    setDeleting(true)
+    try {
+      await deletePet(pet.id)
+      setConfirmPet(null)
+      await refresh()
+    } catch (err) {
+      setError(err?.message || 'No pudimos eliminar la mascota.')
+    } finally {
+      setDeleting(false)
     }
   }
 
@@ -130,28 +146,63 @@ export default function MyPets() {
                   </p>
                 </div>
               </div>
-              <div className="mt-4 flex flex-wrap gap-2">
-                <Link
-                  to={`/m/${p.id}`}
-                  className="inline-flex items-center gap-1.5 rounded-full border-2 border-stone-200 px-4 py-2 text-sm font-extrabold text-stone-700 transition hover:border-brand hover:text-brand"
-                >
-                  <Eye className="h-4 w-4" /> Ver ficha
-                </Link>
-                <button
-                  type="button"
-                  onClick={() => setQrPet(p)}
-                  className="inline-flex items-center gap-1.5 rounded-full border-2 border-stone-200 px-4 py-2 text-sm font-extrabold text-stone-700 transition hover:border-brand hover:text-brand"
-                >
-                  <QrCode className="h-4 w-4" /> QR
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setEditPet(p)}
-                  className="inline-flex items-center gap-1.5 rounded-full border-2 border-stone-200 px-4 py-2 text-sm font-extrabold text-stone-700 transition hover:border-brand hover:text-brand"
-                >
-                  <Pencil className="h-4 w-4" /> Editar
-                </button>
-              </div>
+              {confirmPet?.id === p.id ? (
+                <div className="mt-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3">
+                  <p className="text-sm font-bold text-stone-700">
+                    ¿Eliminar la ficha de {p.nombre}? Se borra su ficha pública
+                    y su QR deja de funcionar. No se puede deshacer.
+                  </p>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={() => handleDelete(p)}
+                      disabled={deleting}
+                      className="inline-flex items-center gap-1.5 rounded-full bg-status-perdido px-4 py-2 text-sm font-extrabold text-white transition hover:brightness-110 disabled:opacity-60"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                      {deleting ? 'Eliminando…' : 'Sí, eliminar'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setConfirmPet(null)}
+                      disabled={deleting}
+                      className="rounded-full border-2 border-stone-200 bg-white px-4 py-2 text-sm font-extrabold text-stone-500 transition hover:border-stone-300 disabled:opacity-60"
+                    >
+                      Cancelar
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="mt-4 flex flex-wrap gap-2">
+                  <Link
+                    to={`/m/${p.id}`}
+                    className="inline-flex items-center gap-1.5 rounded-full border-2 border-stone-200 px-4 py-2 text-sm font-extrabold text-stone-700 transition hover:border-brand hover:text-brand"
+                  >
+                    <Eye className="h-4 w-4" /> Ver ficha
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={() => setQrPet(p)}
+                    className="inline-flex items-center gap-1.5 rounded-full border-2 border-stone-200 px-4 py-2 text-sm font-extrabold text-stone-700 transition hover:border-brand hover:text-brand"
+                  >
+                    <QrCode className="h-4 w-4" /> QR
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setEditPet(p)}
+                    className="inline-flex items-center gap-1.5 rounded-full border-2 border-stone-200 px-4 py-2 text-sm font-extrabold text-stone-700 transition hover:border-brand hover:text-brand"
+                  >
+                    <Pencil className="h-4 w-4" /> Editar
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setConfirmPet(p)}
+                    className="inline-flex items-center gap-1.5 rounded-full border-2 border-stone-200 px-4 py-2 text-sm font-extrabold text-stone-400 transition hover:border-status-perdido hover:text-status-perdido"
+                  >
+                    <Trash2 className="h-4 w-4" /> Eliminar
+                  </button>
+                </div>
+              )}
             </div>
           ))}
         </div>

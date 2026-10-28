@@ -2,8 +2,11 @@ import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
   Camera,
+  Check,
   CheckCircle2,
+  Copy,
   Download,
+  Heart,
   Loader2,
   PawPrint,
   QrCode,
@@ -80,9 +83,27 @@ function NeedAccount() {
 
 /* --------------------------- Éxito + QR ------------------------------- */
 
+const DONATE_MP_ALIAS = 'facundo.9dejulio'
+
 function Success({ pet, onAnother }) {
   const [qrImg, setQrImg] = useState(null)
+  const [aliasCopied, setAliasCopied] = useState(false)
   const fichaUrl = `${window.location.origin}/m/${pet.id}`
+
+  async function handleCopyAlias() {
+    try {
+      await navigator.clipboard.writeText(DONATE_MP_ALIAS)
+    } catch {
+      const ta = document.createElement('textarea')
+      ta.value = DONATE_MP_ALIAS
+      document.body.appendChild(ta)
+      ta.select()
+      document.execCommand('copy')
+      document.body.removeChild(ta)
+    }
+    setAliasCopied(true)
+    setTimeout(() => setAliasCopied(false), 2000)
+  }
 
   useEffect(() => {
     qrDataURL(fichaUrl, 640)
@@ -139,6 +160,36 @@ function Success({ pet, onAnother }) {
           >
             Registrar otra mascota
           </button>
+        </div>
+
+        <div className="mt-8 rounded-2xl bg-brand-faint px-5 py-4">
+          <p className="flex items-center justify-center gap-1.5 text-sm font-extrabold text-stone-800">
+            <Heart className="h-4 w-4 text-brand" fill="currentColor" />
+            Patitas es gratis
+          </p>
+          <p className="mt-1 text-sm text-stone-600">
+            Si te sirvió, podés colaborar con lo que quieras por Mercado Pago.
+          </p>
+          <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
+            <span className="text-xs font-bold uppercase tracking-wide text-stone-500">
+              Alias
+            </span>
+            <code className="select-all rounded-lg border border-stone-200 bg-white px-3 py-1.5 font-mono text-sm font-bold text-stone-800">
+              {DONATE_MP_ALIAS}
+            </code>
+            <button
+              type="button"
+              onClick={handleCopyAlias}
+              className={`inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-sm font-extrabold transition ${
+                aliasCopied
+                  ? 'bg-brand text-white'
+                  : 'border border-stone-200 bg-white text-stone-700 hover:border-brand hover:text-brand'
+              }`}
+            >
+              {aliasCopied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+              {aliasCopied ? '¡Copiado!' : 'Copiar alias'}
+            </button>
+          </div>
         </div>
       </div>
     </div>

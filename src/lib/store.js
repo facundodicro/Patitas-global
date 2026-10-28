@@ -251,13 +251,31 @@ export async function getPetWithVeterinaria(id) {
 export async function getPublicPet(id) {
   if (!DEMO_MODE) {
     const { data } = await supabase.from('pets_public').select('*').eq('id', id).maybeSingle()
-    if (data) return data
+    if (data) {
+      // La vista pets_public es anterior a la columna raza (2026-10-28):
+      // si la fila no la trae, se intenta completar desde la tabla base
+      // pidiendo SOLO la raza (dato de la mascota, jamás del dueño).
+      // Si la lectura no está permitida, la ficha sigue sin raza.
+      if (data.raza === undefined) {
+        try {
+          const { data: extra } = await supabase
+            .from('pets')
+            .select('raza')
+            .eq('id', id)
+            .maybeSingle()
+          if (extra) return { ...data, raza: extra.raza ?? null }
+        } catch {
+          /* la ficha funciona igual sin la raza */
+        }
+      }
+      return data
+    }
     // Respaldo: si la vista no trae la fila (p. ej. una mascota de dueño
     // que la vista todavía no incluye), se lee la tabla base pidiendo
     // SOLO columnas seguras: jamás datos del dueño.
     const { data: base, error } = await supabase
       .from('pets')
-      .select('id, nombre, especie, edad, senas, foto_url, veterinaria_id, created_at')
+      .select('id, nombre, especie, raza, edad, senas, foto_url, veterinaria_id, created_at')
       .eq('id', id)
       .maybeSingle()
     if (error) throw error
