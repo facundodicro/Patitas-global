@@ -22,7 +22,9 @@ import {
   deleteAtencion,
   deletePet,
   getMyVeterinaria,
+  getPet,
   getPetWithVeterinaria,
+  getPublicOwnerContact,
   getPublicPetWithVeterinaria,
   listAtenciones,
 } from '../lib/store'
@@ -204,6 +206,8 @@ export default function PetPublic() {
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(true)
   const [isVet, setIsVet] = useState(false)
+  const [isOwner, setIsOwner] = useState(false)
+  const [ownerContact, setOwnerContact] = useState(null)
   const [atenciones, setAtenciones] = useState([])
   const [atencionModal, setAtencionModal] = useState(false)
   const [petModal, setPetModal] = useState(false)
@@ -218,16 +222,26 @@ export default function PetPublic() {
       setData(null)
       return
     }
+    // Contacto del dueño SOLO si la mascota fue registrada por él y
+    // aceptó mostrarlo (las de veterinaria nunca lo exponen)
+    setOwnerContact(await getPublicOwnerContact(id).catch(() => null))
     // Si hay sesión, verificar si es la vete dueña para mostrar la ficha completa
     let full = pub
     let vet = false
+    let owner = false
     if (user) {
       const mine = await getMyVeterinaria(user.id).catch(() => null)
       vet = !!mine && mine.id === pub.pet.veterinaria_id
-      if (vet) full = await getPetWithVeterinaria(id)
+      if (vet) {
+        full = await getPetWithVeterinaria(id)
+      } else {
+        const minePet = await getPet(id).catch(() => null)
+        owner = !!minePet && minePet.dueno_user_id === user.id
+      }
     }
     setData(full)
     setIsVet(vet)
+    setIsOwner(owner)
     setAtenciones(vet ? await listAtenciones(full.pet.id) : [])
   }
 
@@ -286,16 +300,36 @@ export default function PetPublic() {
           `¡Hola! Encontré a ${pet.nombre}, escaneé su QR de Patitas.`,
         )
       : null
+    // Mascota registrada por su dueño: el contacto es el dueño mismo,
+    // y solo llega acá si él aceptó mostrarlo (pets_contacto_dueno)
+    const duenoHref =
+      !veterinaria && ownerContact?.whatsapp
+        ? waLink(
+            ownerContact.whatsapp,
+            `¡Hola! Encontré a ${pet.nombre}, escaneé su QR de Patitas.`,
+          )
+        : null
 
     return (
       <div className="mx-auto max-w-2xl animate-fade-up px-4 py-8">
+        {isOwner && (
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-brand px-5 py-3.5 text-white">
+            <p className="font-extrabold">Esta es la ficha de tu mascota</p>
+            <Link
+              to="/mis-mascotas"
+              className="rounded-full bg-white px-4 py-1.5 text-sm font-extrabold text-brand-dark transition hover:bg-brand-soft"
+            >
+              Editar o descargar el QR
+            </Link>
+          </div>
+        )}
         <div className="overflow-hidden rounded-3xl bg-white shadow-card">
           <PetPhoto src={pet.foto_url} alt={pet.nombre} className="h-72 w-full object-cover" />
           <div className="p-6">
             <h1 className="text-3xl font-extrabold text-stone-900">{pet.nombre}</h1>
-            {(pet.especie || pet.edad) && (
+            {(pet.especie || pet.raza || pet.edad) && (
               <p className="mt-1 text-stone-600">
-                {[pet.especie, pet.edad].filter(Boolean).join(' · ')}
+                {[pet.especie, pet.raza, pet.edad].filter(Boolean).join(' · ')}
               </p>
             )}
             {veterinaria && (
@@ -326,9 +360,37 @@ export default function PetPublic() {
                     Llamar
                   </a>
                 </>
-              ) : (
+              ) : duenoHref ? (
+                <>
+                  <p className="mt-2 text-sm font-bold text-stone-600">
+                    Su dueño{ownerContact?.nombre ? ` es ${ownerContact.nombre}` : ''}:
+                    avisale que la tenés.
+                  </p>
+                  <a
+                    href={duenoHref}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="mt-3 flex items-center justify-center gap-2 rounded-full bg-status-encontrado px-6 py-3.5 text-lg font-extrabold text-white transition hover:brightness-110"
+                  >
+                    <MessageCircle className="h-6 w-6" />
+                    Avisar a su dueño por WhatsApp
+                  </a>
+                  <a
+                    href={`tel:${ownerContact.whatsapp}`}
+                    className="mt-3 flex items-center justify-center gap-2 rounded-full border-2 border-stone-300 px-6 py-2.5 font-extrabold text-stone-700 transition hover:border-stone-400"
+                  >
+                    <Phone className="h-5 w-5" />
+                    Llamar
+                  </a>
+                </>
+              ) : veterinaria ? (
                 <p className="mt-3 rounded-xl bg-stone-100 px-4 py-3 text-sm font-bold text-stone-600">
                   Esta veterinaria aún no cargó su WhatsApp.
+                </p>
+              ) : (
+                <p className="mt-3 rounded-xl bg-stone-100 px-4 py-3 text-sm font-bold text-stone-600">
+                  Esta mascota está registrada en Patitas, pero todavía no hay un
+                  contacto público cargado para avisar.
                 </p>
               )}
             </div>

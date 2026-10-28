@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import { BellRing, HeartPulse, QrCode, ScanLine, Smartphone, UserPlus } from 'lucide-react'
 import { PawMark } from '../components/Logo'
 
@@ -212,6 +213,21 @@ export default function Home() {
                   </div>
                 </li>
               </ul>
+              <div className="mt-8 rounded-3xl bg-brand-faint p-6">
+                <p className="font-extrabold text-stone-900">
+                  ¿Tu veterinaria no usa Patitas todavía?
+                </p>
+                <p className="mt-1 text-sm text-stone-600">
+                  Registrá a tu mascota vos mismo, gratis: creás su ficha y descargás
+                  su QR para el collar. Si se pierde, te avisan a vos por WhatsApp.
+                </p>
+                <Link
+                  to="/registrar-mascota"
+                  className="mt-4 inline-block rounded-full bg-brand px-6 py-3 font-extrabold text-white transition hover:bg-brand-dark"
+                >
+                  Registrá a tu mascota gratis
+                </Link>
+              </div>
             </div>
             <div className="mx-auto w-full max-w-sm -rotate-2" aria-hidden="true">
               <div className="rounded-3xl bg-white p-6 text-stone-900 shadow-pop ring-1 ring-stone-200">

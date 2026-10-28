@@ -250,13 +250,22 @@ export async function getPetWithVeterinaria(id) {
 /** Mascota pública (sin datos del dueño) para el QR. */
 export async function getPublicPet(id) {
   if (!DEMO_MODE) {
-    const { data, error } = await supabase.from('pets_public').select('*').eq('id', id).single()
+    const { data } = await supabase.from('pets_public').select('*').eq('id', id).maybeSingle()
+    if (data) return data
+    // Respaldo: si la vista no trae la fila (p. ej. una mascota de dueño
+    // que la vista todavía no incluye), se lee la tabla base pidiendo
+    // SOLO columnas seguras: jamás datos del dueño.
+    const { data: base, error } = await supabase
+      .from('pets')
+      .select('id, nombre, especie, edad, senas, foto_url, veterinaria_id, created_at')
+      .eq('id', id)
+      .maybeSingle()
     if (error) throw error
-    return data
+    return base
   }
   const p = demo.pets.find((x) => x.id === id) ?? null
   if (!p) return null
-  const { dueno_nombre, dueno_whatsapp, owner_id, qr_destino, ...pub } = p
+  const { dueno_nombre, dueno_whatsapp, dueno_user_id, consentimiento_contacto, origen, owner_id, qr_destino, ...pub } = p
   return pub
 }
 
@@ -266,6 +275,105 @@ export async function getPublicPetWithVeterinaria(id) {
   if (!pet) return null
   const veterinaria = pet.veterinaria_id ? await getVeterinaria(pet.veterinaria_id) : null
   return { pet, veterinaria }
+}
+
+/**
+ * Contacto público del dueño de una mascota registrada por él mismo.
+ * Devuelve { nombre, whatsapp } SOLO si la mascota es de origen 'dueno'
+ * y el dueño aceptó mostrar su WhatsApp (vista pets_contacto_dueno).
+ * Ante cualquier error (p. ej. la migración aún no se corrió) devuelve
+ * null: la ficha pública sigue funcionando sin el botón de contacto.
+ */
+export async function getPublicOwnerContact(petId) {
+  if (!DEMO_MODE) {
+    try {
+      const { data, error } = await supabase
+        .from('pets_contacto_dueno')
+        .select('nombre, whatsapp')
+        .eq('pet_id', petId)
+        .maybeSingle()
+      if (error) return null
+      return data
+    } catch {
+      return null
+    }
+  }
+  const p = demo.pets.find((x) => x.id === petId) ?? null
+  if (p && p.origen === 'dueno' && p.consentimiento_contacto && p.dueno_whatsapp) {
+    return { nombre: p.dueno_nombre, whatsapp: p.dueno_whatsapp }
+  }
+  return null
+}
+
+/** Mascotas registradas por el propio dueño (panel "Mis mascotas"). */
+export async function listMyPets(userId) {
+  if (!DEMO_MODE) {
+    const { data, error } = await supabase
+      .from('pets')
+      .select('*')
+      .eq('dueno_user_id', userId)
+      .eq('origen', 'dueno')
+      .order('created_at', { ascending: false })
+    if (error) throw error
+    return data
+  }
+  return demo.pets
+    .filter((p) => p.dueno_user_id === userId && p.origen === 'dueno')
+    .sort(byCreatedDesc)
+}
+
+/**
+ * Registra la mascota de un dueño (sin veterinaria).
+ * Requiere consentimiento explícito: el llamador debe pasar
+ * consentimiento=true; ese OK es lo que habilita el contacto público.
+ */
+export async function createOwnerPet(
+  userId,
+  { nombre, especie, raza, senas, foto_url, dueno_nombre, dueno_whatsapp, consentimiento },
+) {
+  if (!consentimiento) {
+    throw new Error('Necesitamos tu OK para mostrar tu WhatsApp en la ficha pública.')
+  }
+  if (!DEMO_MODE) {
+    const { data: row, error } = await supabase
+      .from('pets')
+      .insert({
+        veterinaria_id: null,
+        origen: 'dueno',
+        dueno_user_id: userId,
+        consentimiento_contacto: true,
+        nombre,
+        especie,
+        raza: raza || null,
+        senas: senas || null,
+        foto_url: foto_url || null,
+        dueno_nombre,
+        dueno_whatsapp,
+      })
+      .select()
+      .single()
+    if (error) throw error
+    return row
+  }
+  const row = {
+    id: uid('pet'),
+    veterinaria_id: null,
+    origen: 'dueno',
+    dueno_user_id: userId,
+    consentimiento_contacto: true,
+    nombre,
+    especie,
+    raza: raza || null,
+    edad: null,
+    senas: senas || null,
+    foto_url: foto_url || null,
+    dueno_nombre,
+    dueno_whatsapp,
+    created_at: new Date().toISOString(),
+  }
+  demo.pets.unshift(row)
+  saveDemo()
+  return row
 }
 
 /** Registra un paciente de la veterinaria. */

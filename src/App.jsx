@@ -9,6 +9,8 @@ import PetPublic from './pages/PetPublic'
 import Privacy from './pages/Privacy'
 import Login from './pages/Login'
 import VetPanel from './pages/VetPanel'
+import OwnerRegister from './pages/OwnerRegister'
+import MyPets from './pages/MyPets'
 
 /** Desplaza a la sección indicada cuando la URL trae #hash (ej: /#como-funciona). */
 function ScrollToHash() {
@@ -40,6 +42,8 @@ export default function App() {
           <Route path="/m/:id" element={<PetPublic />} />
           <Route path="/ingresar" element={<Login />} />
           <Route path="/panel" element={<VetPanel />} />
+          <Route path="/registrar-mascota" element={<OwnerRegister />} />
+          <Route path="/mis-mascotas" element={<MyPets />} />
           <Route path="/privacidad" element={<Privacy />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

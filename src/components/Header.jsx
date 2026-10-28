@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
-import { ChevronDown, Download, LayoutDashboard, LogOut, Menu, User, X } from 'lucide-react';
+import { ChevronDown, Download, LayoutDashboard, LogOut, Menu, PawPrint, User, X } from 'lucide-react';
 import Logo from './Logo';
 import InstallModal from './InstallModal';
 import { useAuth } from '../hooks/useAuth';
@@ -77,6 +77,13 @@ export default function Header() {
                     >
                       <LayoutDashboard className="h-4 w-4" /> Mi panel
                     </Link>
+                    <Link
+                      to="/mis-mascotas"
+                      onClick={() => setDropdownOpen(false)}
+                      className="flex items-center gap-2 px-4 py-2.5 text-sm text-stone-700 transition hover:bg-stone-50"
+                    >
+                      <PawPrint className="h-4 w-4" /> Mis mascotas
+                    </Link>
                     <button
                       type="button"
                       onClick={handleSignOut}
@@ -129,6 +136,13 @@ export default function Header() {
                     className="rounded-xl px-3 py-2.5 text-sm font-medium text-stone-600"
                   >
                     Mi panel
+                  </Link>
+                  <Link
+                    to="/mis-mascotas"
+                    onClick={() => setMenuOpen(false)}
+                    className="rounded-xl px-3 py-2.5 text-sm font-medium text-stone-600"
+                  >
+                    Mis mascotas
                   </Link>
                   <button
                     type="button"
