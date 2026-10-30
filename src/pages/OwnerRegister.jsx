@@ -50,7 +50,8 @@ function NeedAccount() {
         <ul className="mt-5 space-y-3 text-sm text-stone-600">
           <li className="flex items-start gap-2.5">
             <QrCode className="mt-0.5 h-4 w-4 shrink-0 text-brand" />
-            Es gratis y no necesitás que tu veterinaria esté adherida.
+            Es gratis y no necesitás que tu veterinaria esté adherida. El registro
+            gratuito cubre hasta 3 mascotas por cuenta.
           </li>
           <li className="flex items-start gap-2.5">
             <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-brand" />
@@ -250,11 +251,15 @@ function RegisterForm() {
       })
       setCreated(pet)
     } catch (err) {
-      setError(
-        err?.message
-          ? `No se pudo registrar: ${err.message}`
-          : 'No se pudo registrar. Probá de nuevo.',
-      )
+      if (err?.code === 'LIMITE_MASCOTAS') {
+        setError(err.message)
+      } else {
+        setError(
+          err?.message
+            ? `No se pudo registrar: ${err.message}`
+            : 'No se pudo registrar. Probá de nuevo.',
+        )
+      }
     } finally {
       setSubmitting(false)
     }

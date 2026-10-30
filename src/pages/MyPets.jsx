@@ -101,12 +101,18 @@ export default function MyPets() {
             {pets.length === 1 ? '' : 's'} por vos
           </p>
         </div>
-        <Link
-          to="/registrar-mascota"
-          className="inline-flex items-center gap-1.5 rounded-full bg-brand px-5 py-2.5 text-sm font-extrabold text-white transition hover:bg-brand-dark"
-        >
-          <Plus className="h-4 w-4" /> Registrar mascota
-        </Link>
+        {pets.length >= 3 ? (
+          <p className="max-w-[240px] text-right text-xs font-semibold leading-snug text-stone-500">
+            Llegaste al máximo del registro gratuito: 3 mascotas por cuenta.
+          </p>
+        ) : (
+          <Link
+            to="/registrar-mascota"
+            className="inline-flex items-center gap-1.5 rounded-full bg-brand px-5 py-2.5 text-sm font-extrabold text-white transition hover:bg-brand-dark"
+          >
+            <Plus className="h-4 w-4" /> Registrar mascota
+          </Link>
+        )}
       </div>
 
       {error && (
