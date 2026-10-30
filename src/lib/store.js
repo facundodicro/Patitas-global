@@ -340,6 +340,13 @@ export async function listMyPets(userId) {
     .sort(byCreatedDesc)
 }
 
+/** Tope de la capa gratuita de dueños: hasta 3 mascotas por cuenta (decisión 2026-10-30).
+ * El volumen (negocios, refugios) va por la capa paga o el canal causa, no por acá. */
+export const MAX_MASCOTAS_GRATIS = 3
+
+export const MENSAJE_LIMITE_MASCOTAS =
+  'El registro gratuito cubre hasta 3 mascotas por cuenta. Si necesitás registrar más — por ejemplo, si sos un negocio o un refugio — contactanos desde el pie de la página y lo armamos juntos.'
+
 /**
  * Registra la mascota de un dueño (sin veterinaria).
  * Requiere consentimiento explícito: el llamador debe pasar
@@ -351,6 +358,26 @@ export async function createOwnerPet(
 ) {
   if (!consentimiento) {
     throw new Error('Necesitamos tu OK para mostrar tu WhatsApp en la ficha pública.')
+  }
+  // Tope de la capa gratuita: contar las mascotas que este dueño ya registró.
+  if (!DEMO_MODE) {
+    const { count } = await supabase
+      .from('pets')
+      .select('id', { count: 'exact', head: true })
+      .eq('dueno_user_id', userId)
+      .eq('origen', 'dueno')
+    if (count !== null && count >= MAX_MASCOTAS_GRATIS) {
+      const err = new Error(MENSAJE_LIMITE_MASCOTAS)
+      err.code = 'LIMITE_MASCOTAS'
+      throw err
+    }
+  } else if (
+    demo.pets.filter((p) => p.dueno_user_id === userId && p.origen === 'dueno').length >=
+    MAX_MASCOTAS_GRATIS
+  ) {
+    const err = new Error(MENSAJE_LIMITE_MASCOTAS)
+    err.code = 'LIMITE_MASCOTAS'
+    throw err
   }
   if (!DEMO_MODE) {
     const { data: row, error } = await supabase
