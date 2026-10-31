@@ -6,10 +6,12 @@ import {
   Check,
   Loader2,
   LogOut,
+  Pencil,
   Plus,
   QrCode,
   Search,
   Stethoscope,
+  X,
 } from 'lucide-react'
 import Logo from '../components/Logo'
 import PetPhoto from '../components/PetPhoto'
@@ -24,6 +26,7 @@ import {
   getMyVeterinaria,
   listAtenciones,
   listVetPets,
+  updateVeterinaria,
   uploadPetPhoto,
 } from '../lib/store'
 
@@ -256,9 +259,147 @@ function VetRegister({ onSaved }) {
   )
 }
 
+/* --------------------- Editar perfil del negocio ----------------------- */
+
+function VetProfileModal({ onClose, onSaved, veterinaria }) {
+  const [nombre, setNombre] = useState(veterinaria.nombre || '')
+  const [whatsapp, setWhatsapp] = useState(veterinaria.whatsapp || '')
+  const [direccion, setDireccion] = useState(veterinaria.direccion || '')
+  const [file, setFile] = useState(null)
+  const [preview, setPreview] = useState(veterinaria.logo_url || null)
+  const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState('')
+  const fileRef = useRef(null)
+
+  function handleFile(f) {
+    if (!f) return
+    setFile(f)
+    const reader = new FileReader()
+    reader.onload = (e) => setPreview(e.target.result)
+    reader.readAsDataURL(f)
+  }
+
+  async function handleSubmit(e) {
+    e.preventDefault()
+    setError('')
+    if (!nombre.trim() || !whatsapp.trim()) {
+      setError('Completá el nombre y el WhatsApp de la veterinaria.')
+      return
+    }
+    setSubmitting(true)
+    try {
+      const logo_url = file ? await uploadPetPhoto(file) : veterinaria.logo_url
+      const row = await updateVeterinaria(veterinaria.id, {
+        nombre: nombre.trim(),
+        whatsapp: whatsapp.trim(),
+        direccion: direccion.trim(),
+        logo_url,
+      })
+      onSaved(row)
+      onClose()
+    } catch (err) {
+      setError(err?.message || 'No se pudo guardar. Probá de nuevo.')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  return (
+    <div
+      className="fixed inset-0 z-[60] flex items-center justify-center bg-stone-900/50 p-4 backdrop-blur-sm"
+      onClick={onClose}
+    >
+      <div
+        className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-white p-6 shadow-pop animate-fade-up"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="mb-5 flex items-center justify-between">
+          <h2 className="text-xl font-extrabold text-stone-900">Editar perfil</h2>
+          <button
+            type="button"
+            onClick={onClose}
+            className="-m-2 p-2 text-stone-400 transition hover:text-stone-700"
+            aria-label="Cerrar"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+        <p className="-mt-2 mb-5 text-sm text-stone-500">
+          Estos datos aparecen en el QR de tus pacientes.
+        </p>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className={labelCls}>Nombre *</label>
+            <input
+              className={inputCls}
+              value={nombre}
+              onChange={(e) => setNombre(e.target.value)}
+              placeholder="Ej: Veterinaria Huellas"
+              required
+            />
+          </div>
+          <div>
+            <label className={labelCls}>WhatsApp *</label>
+            <input
+              className={inputCls}
+              value={whatsapp}
+              onChange={(e) => setWhatsapp(e.target.value)}
+              placeholder="Ej: 5492262000000"
+              required
+            />
+          </div>
+          <div>
+            <label className={labelCls}>Dirección</label>
+            <input
+              className={inputCls}
+              value={direccion}
+              onChange={(e) => setDireccion(e.target.value)}
+              placeholder="Ej: Av. 58 1234, Necochea"
+            />
+          </div>
+          <div>
+            <label className={labelCls}>Logo</label>
+            <input
+              ref={fileRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => handleFile(e.target.files?.[0])}
+            />
+            <button
+              type="button"
+              onClick={() => fileRef.current?.click()}
+              className="flex w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-stone-200 px-4 py-3 text-sm font-bold text-stone-500 transition hover:border-brand hover:text-brand"
+            >
+              <Camera className="h-4 w-4" />
+              {preview ? 'Cambiar logo' : 'Subir logo'}
+            </button>
+            {preview && (
+              <img
+                src={preview}
+                alt="Vista previa del logo"
+                className="mx-auto mt-3 h-24 w-24 rounded-2xl object-cover shadow-card"
+              />
+            )}
+          </div>
+          {error && <p className="text-sm font-bold text-status-perdido">{error}</p>}
+          <button
+            type="submit"
+            disabled={submitting}
+            className="flex w-full items-center justify-center gap-2 rounded-full bg-brand px-6 py-3 font-extrabold text-white transition hover:bg-brand-dark disabled:opacity-60"
+          >
+            {submitting && <Loader2 className="h-5 w-5 animate-spin" />}
+            {submitting ? 'Guardando…' : 'Guardar cambios'}
+          </button>
+        </form>
+      </div>
+    </div>
+  )
+}
+
 /* ------------------------------ Dashboard ------------------------------- */
 
-function Dashboard({ veterinaria }) {
+function Dashboard({ veterinaria, onProfileUpdated }) {
   const { signOut } = useAuth()
   const navigate = useNavigate()
   const [pets, setPets] = useState([])
@@ -269,6 +410,7 @@ function Dashboard({ veterinaria }) {
   const [qrModal, setQrModal] = useState({ open: false, pet: null })
   const [successPet, setSuccessPet] = useState(null)
   const [atencionPet, setAtencionPet] = useState(null)
+  const [profileOpen, setProfileOpen] = useState(false)
 
   async function refresh() {
     const list = await listVetPets(veterinaria.id)
@@ -344,6 +486,13 @@ function Dashboard({ veterinaria }) {
             className="inline-flex items-center gap-1.5 rounded-full bg-brand px-5 py-2.5 text-sm font-extrabold text-white transition hover:bg-brand-dark"
           >
             <Plus className="h-4 w-4" /> Registrar mascota
+          </button>
+          <button
+            type="button"
+            onClick={() => setProfileOpen(true)}
+            className="inline-flex items-center gap-1.5 rounded-full border-2 border-stone-200 px-4 py-2 text-sm font-extrabold text-stone-600 transition hover:border-stone-300"
+          >
+            <Pencil className="h-4 w-4" /> Editar perfil
           </button>
           <button
             type="button"
@@ -505,6 +654,13 @@ function Dashboard({ veterinaria }) {
           </div>
         </div>
       )}
+      {profileOpen && (
+        <VetProfileModal
+          onClose={() => setProfileOpen(false)}
+          onSaved={(row) => onProfileUpdated?.(row)}
+          veterinaria={veterinaria}
+        />
+      )}
       <AtencionFormModal
         open={!!atencionPet}
         onClose={() => setAtencionPet(null)}
@@ -554,5 +710,5 @@ export default function VetPanel() {
   if (loading || checking) return <Spinner />
   if (!user) return <VetLogin />
   if (!veterinaria) return <VetRegister onSaved={setVeterinaria} />
-  return <Dashboard veterinaria={veterinaria} />
+  return <Dashboard veterinaria={veterinaria} onProfileUpdated={setVeterinaria} />
 }
