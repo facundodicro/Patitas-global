@@ -57,6 +57,7 @@ export default function PetPublic() {
   const [ownerContact, setOwnerContact] = useState(null)
   const [atenciones, setAtenciones] = useState([])
   const [atencionModal, setAtencionModal] = useState(false)
+  const [editAtencion, setEditAtencion] = useState(null)
   const [petModal, setPetModal] = useState(false)
   const [qrModal, setQrModal] = useState(false)
   // id de atención en confirmación, o 'pet' para eliminar el paciente
@@ -395,14 +396,24 @@ export default function PetPublic() {
                     </button>
                   </span>
                 ) : (
-                  <button
-                    type="button"
-                    onClick={() => setConfirming(a.id)}
-                    className="p-1.5 text-stone-300 transition hover:text-status-perdido"
-                    aria-label="Eliminar atención"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </button>
+                  <span className="flex items-center gap-1">
+                    <button
+                      type="button"
+                      onClick={() => setEditAtencion(a)}
+                      className="p-1.5 text-stone-300 transition hover:text-brand"
+                      aria-label="Editar atención"
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setConfirming(a.id)}
+                      className="p-1.5 text-stone-300 transition hover:text-status-perdido"
+                      aria-label="Eliminar atención"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </span>
                 )}
               </div>
               <h3 className="mt-2 font-extrabold text-stone-900">{a.titulo}</h3>
@@ -432,6 +443,16 @@ export default function PetPublic() {
         mascotaId={pet.id}
         veterinariaId={pet.veterinaria_id}
       />
+      {editAtencion && (
+        <AtencionFormModal
+          open
+          onClose={() => setEditAtencion(null)}
+          onSaved={refresh}
+          mascotaId={pet.id}
+          veterinariaId={pet.veterinaria_id}
+          atencion={editAtencion}
+        />
+      )}
       <PetFormModal
         open={petModal}
         onClose={() => setPetModal(false)}
