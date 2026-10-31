@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { ChevronDown, Download, LayoutDashboard, LogOut, Menu, PawPrint, User, X } from 'lucide-react';
 import Logo from './Logo';
 import InstallModal from './InstallModal';
 import { useAuth } from '../hooks/useAuth';
+import { getMyVeterinaria, listMyPets } from '../lib/store';
 
 const LINKS = [
   { to: '/', label: 'Inicio', end: true },
@@ -20,6 +21,30 @@ export default function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [installOpen, setInstallOpen] = useState(false);
+  // Rol del usuario: el menú muestra solo lo que le sirve a cada uno.
+  // Veterinaria → «Mi panel»; dueño → «Mis mascotas»; si es ambos, ambos.
+  const [role, setRole] = useState(null);
+
+  useEffect(() => {
+    let mounted = true;
+    if (!user) {
+      setRole(null);
+      return;
+    }
+    (async () => {
+      const [vet, pets] = await Promise.all([
+        getMyVeterinaria(user.id).catch(() => null),
+        listMyPets(user.id).catch(() => []),
+      ]);
+      if (mounted) setRole({ hasVet: !!vet, hasPets: pets.length > 0 });
+    })();
+    return () => {
+      mounted = false;
+    };
+  }, [user]);
+
+  const showPanel = !!role?.hasVet;
+  const showPets = !!role && (!role.hasVet || role.hasPets);
 
   const handleSignOut = async () => {
     await signOut();
@@ -70,20 +95,24 @@ export default function Header() {
                     <p className="truncate border-b border-stone-100 px-4 py-3 text-xs text-stone-500">
                       {user.email}
                     </p>
-                    <Link
-                      to="/panel"
-                      onClick={() => setDropdownOpen(false)}
-                      className="flex items-center gap-2 px-4 py-2.5 text-sm text-stone-700 transition hover:bg-stone-50"
-                    >
-                      <LayoutDashboard className="h-4 w-4" /> Mi panel
-                    </Link>
-                    <Link
-                      to="/mis-mascotas"
-                      onClick={() => setDropdownOpen(false)}
-                      className="flex items-center gap-2 px-4 py-2.5 text-sm text-stone-700 transition hover:bg-stone-50"
-                    >
-                      <PawPrint className="h-4 w-4" /> Mis mascotas
-                    </Link>
+                    {showPanel && (
+                      <Link
+                        to="/panel"
+                        onClick={() => setDropdownOpen(false)}
+                        className="flex items-center gap-2 px-4 py-2.5 text-sm text-stone-700 transition hover:bg-stone-50"
+                      >
+                        <LayoutDashboard className="h-4 w-4" /> Mi panel
+                      </Link>
+                    )}
+                    {showPets && (
+                      <Link
+                        to="/mis-mascotas"
+                        onClick={() => setDropdownOpen(false)}
+                        className="flex items-center gap-2 px-4 py-2.5 text-sm text-stone-700 transition hover:bg-stone-50"
+                      >
+                        <PawPrint className="h-4 w-4" /> Mis mascotas
+                      </Link>
+                    )}
                     <button
                       type="button"
                       onClick={handleSignOut}
@@ -130,20 +159,24 @@ export default function Header() {
               ))}
               {user ? (
                 <>
-                  <Link
-                    to="/panel"
-                    onClick={() => setMenuOpen(false)}
-                    className="rounded-xl px-3 py-2.5 text-sm font-medium text-stone-600"
-                  >
-                    Mi panel
-                  </Link>
-                  <Link
-                    to="/mis-mascotas"
-                    onClick={() => setMenuOpen(false)}
-                    className="rounded-xl px-3 py-2.5 text-sm font-medium text-stone-600"
-                  >
-                    Mis mascotas
-                  </Link>
+                  {showPanel && (
+                    <Link
+                      to="/panel"
+                      onClick={() => setMenuOpen(false)}
+                      className="rounded-xl px-3 py-2.5 text-sm font-medium text-stone-600"
+                    >
+                      Mi panel
+                    </Link>
+                  )}
+                  {showPets && (
+                    <Link
+                      to="/mis-mascotas"
+                      onClick={() => setMenuOpen(false)}
+                      className="rounded-xl px-3 py-2.5 text-sm font-medium text-stone-600"
+                    >
+                      Mis mascotas
+                    </Link>
+                  )}
                   <button
                     type="button"
                     onClick={() => {
