@@ -260,11 +260,11 @@ export default function PetPublic() {
       </Link>
 
       <div className="mt-4 overflow-hidden rounded-3xl bg-white shadow-card">
-        <div className="flex flex-col gap-5 p-6 sm:flex-row">
+        <div className="flex flex-col gap-5 p-6">
           <PetPhoto
             src={pet.foto_url}
             alt={pet.nombre}
-            className="h-44 w-44 shrink-0 rounded-2xl object-cover"
+            className="h-64 w-full rounded-2xl object-cover"
           />
           <div className="flex-1">
             <span className="inline-flex items-center gap-1.5 rounded-full bg-brand px-3 py-1 text-xs font-extrabold text-white">
