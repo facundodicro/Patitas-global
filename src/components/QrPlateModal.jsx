@@ -123,13 +123,13 @@ export default function QrPlateModal({ open, onClose, pet, ownerPhone, contactLa
     ctx.font = "800 72px Nunito, sans-serif"
     ctx.textAlign = 'center'
     ctx.textBaseline = 'middle'
-    ctx.fillText(pet.nombre, W / 2, 700)
+    ctx.fillText(pet.nombre, W / 2, 635)
 
-    // QR
+    // QR (termina en 1185: el pie va debajo, sin pisarlo)
     if (qrImg) {
       try {
         const qr = await loadImage(qrImg)
-        ctx.drawImage(qr, W / 2 - 280, 780, 560, 560)
+        ctx.drawImage(qr, W / 2 - 250, 685, 500, 500)
       } catch (_) {
         // sin QR dibujado
       }
@@ -138,11 +138,11 @@ export default function QrPlateModal({ open, onClose, pet, ownerPhone, contactLa
     // pie
     ctx.fillStyle = '#57534E'
     ctx.font = "600 40px Nunito, sans-serif"
-    ctx.fillText(waLabel, W / 2, 1230)
+    ctx.fillText(waLabel, W / 2, 1240)
     if (ownerPhone) {
       ctx.fillStyle = '#0F766E'
       ctx.font = "700 40px Nunito, sans-serif"
-      ctx.fillText(ownerPhone, W / 2, 1285)
+      ctx.fillText(ownerPhone, W / 2, 1295)
     }
 
     const a = document.createElement('a')
