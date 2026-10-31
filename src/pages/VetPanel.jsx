@@ -3,17 +3,20 @@ import { Link, useNavigate } from 'react-router-dom'
 import {
   CalendarDays,
   Camera,
+  Check,
   Loader2,
   LogOut,
   Plus,
   QrCode,
   Search,
+  Stethoscope,
 } from 'lucide-react'
 import Logo from '../components/Logo'
 import PetPhoto from '../components/PetPhoto'
 import EmptyState from '../components/EmptyState'
 import PetFormModal from '../components/PetFormModal'
 import QrPlateModal from '../components/QrPlateModal'
+import AtencionFormModal from '../components/AtencionFormModal'
 import { useAuth } from '../hooks/useAuth'
 import {
   createVeterinaria,
@@ -264,6 +267,8 @@ function Dashboard({ veterinaria }) {
   const [query, setQuery] = useState('')
   const [petModal, setPetModal] = useState({ open: false, pet: null })
   const [qrModal, setQrModal] = useState({ open: false, pet: null })
+  const [successPet, setSuccessPet] = useState(null)
+  const [atencionPet, setAtencionPet] = useState(null)
 
   async function refresh() {
     const list = await listVetPets(veterinaria.id)
@@ -432,7 +437,10 @@ function Dashboard({ veterinaria }) {
       <PetFormModal
         open={petModal.open}
         onClose={() => setPetModal({ open: false, pet: null })}
-        onSaved={refresh}
+        onSaved={(saved) => {
+          refresh()
+          if (!petModal.pet && saved) setSuccessPet(saved)
+        }}
         pet={petModal.pet}
         veterinariaId={veterinaria.id}
       />
@@ -442,6 +450,70 @@ function Dashboard({ veterinaria }) {
         pet={qrModal.pet}
         ownerPhone={veterinaria.whatsapp}
         contactLabel="Avisá a mi veterinaria por WhatsApp"
+      />
+      {successPet && (
+        <div
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-stone-900/50 p-4 backdrop-blur-sm"
+          onClick={() => setSuccessPet(null)}
+        >
+          <div
+            className="w-full max-w-md animate-fade-up rounded-2xl bg-white p-6 shadow-pop"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex flex-col items-center text-center">
+              <PetPhoto
+                src={successPet.foto_url}
+                alt={successPet.nombre}
+                className="h-20 w-20 rounded-2xl object-cover shadow-card"
+              />
+              <h2 className="mt-4 text-xl font-extrabold text-stone-900">
+                ¡{successPet.nombre} ya es tu paciente!
+              </h2>
+              <p className="mt-1 text-sm text-stone-500">
+                Quedó registrado en tu panel. ¿Seguimos con su QR o con su primera atención?
+              </p>
+            </div>
+            <div className="mt-6 space-y-3">
+              <button
+                type="button"
+                onClick={() => {
+                  setQrModal({ open: true, pet: successPet })
+                  setSuccessPet(null)
+                }}
+                className="flex w-full items-center justify-center gap-2 rounded-xl bg-brand py-3 text-base font-extrabold text-white shadow-card transition hover:bg-brand-dark"
+              >
+                <QrCode className="h-5 w-5" /> Ver su QR
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setAtencionPet(successPet)
+                  setSuccessPet(null)
+                }}
+                className="flex w-full items-center justify-center gap-2 rounded-xl border-2 border-brand py-3 text-base font-extrabold text-brand transition hover:bg-brand-soft"
+              >
+                <Stethoscope className="h-5 w-5" /> Cargar su primera atención
+              </button>
+              <button
+                type="button"
+                onClick={() => setSuccessPet(null)}
+                className="flex w-full items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-extrabold text-stone-500 transition hover:text-stone-800"
+              >
+                <Check className="h-4 w-4" /> Listo, por ahora no
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      <AtencionFormModal
+        open={!!atencionPet}
+        onClose={() => setAtencionPet(null)}
+        onSaved={() => {
+          setAtencionPet(null)
+          refresh()
+        }}
+        mascotaId={atencionPet?.id}
+        veterinariaId={veterinaria.id}
       />
     </div>
   )
