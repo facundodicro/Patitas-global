@@ -452,14 +452,8 @@ function VetAccountNotice() {
           registrar a tu propia mascota como dueño, hacelo con otro correo.
         </p>
         <Link
-          to="/panel"
-          className="mt-7 flex w-full items-center justify-center gap-2 rounded-full bg-brand px-6 py-3 font-extrabold text-white transition hover:bg-brand-dark"
-        >
-          Ir a mi panel
-        </Link>
-        <Link
           to="/"
-          className="mt-4 block text-center text-sm font-bold text-brand hover:underline"
+          className="mt-7 flex w-full items-center justify-center gap-2 rounded-full bg-brand px-6 py-3 font-extrabold text-white transition hover:bg-brand-dark"
         >
           Volver al inicio
         </Link>

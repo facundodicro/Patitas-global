@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link, NavLink, useNavigate } from 'react-router-dom';
+import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { ChevronDown, Download, LayoutDashboard, LogOut, Menu, PawPrint, User, X } from 'lucide-react';
 import Logo from './Logo';
 import InstallModal from './InstallModal';
@@ -18,6 +18,7 @@ function navClass({ isActive }) {
 export default function Header() {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
+  const { pathname } = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [installOpen, setInstallOpen] = useState(false);
@@ -43,8 +44,15 @@ export default function Header() {
     };
   }, [user]);
 
-  const showPanel = !!role?.hasVet;
-  const showPets = !!role && (!role.hasVet || role.hasPets);
+  // Los dos mundos no se tocan: dentro del perfil del dueño no aparece
+  // ninguna opción de la veterinaria, y dentro del panel no aparece
+  // ninguna del dueño. En las páginas compartidas (inicio, tablón) el
+  // menú muestra la puerta de la cuenta de cada uno.
+  const inVetArea = pathname.startsWith('/panel');
+  const inOwnerArea =
+    pathname.startsWith('/registrar-mascota') || pathname.startsWith('/mis-mascotas');
+  const showPanel = !!role?.hasVet && !inOwnerArea;
+  const showPets = !!role && (!role.hasVet || role.hasPets) && !inVetArea;
 
   const handleSignOut = async () => {
     await signOut();
