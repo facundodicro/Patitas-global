@@ -378,44 +378,51 @@ export default function PetPublic() {
                     {formatFecha(a.fecha)}
                   </span>
                 </div>
-                {confirming === a.id ? (
-                  <span className="flex items-center gap-1.5">
+                {confirming !== a.id && (
+                  <span className="flex items-center gap-1">
+                    <button
+                      type="button"
+                      onClick={() => setEditAtencion(a)}
+                      className="p-1.5 text-stone-900 transition hover:text-brand"
+                      aria-label="Editar atención"
+                    >
+                      <Pencil className="h-5 w-5" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setConfirming(a.id)}
+                      className="p-1.5 text-stone-900 transition hover:text-status-perdido"
+                      aria-label="Eliminar atención"
+                    >
+                      <Trash2 className="h-5 w-5" />
+                    </button>
+                  </span>
+                )}
+              </div>
+              {confirming === a.id && (
+                <div className="mt-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3">
+                  <p className="text-sm font-bold text-stone-700">
+                    ¿Estás seguro de que querés eliminar esta atención? No se puede
+                    deshacer.
+                  </p>
+                  <div className="mt-2 flex gap-2">
                     <button
                       type="button"
                       onClick={() => handleDeleteAtencion(a.id)}
-                      className="rounded-full bg-status-perdido px-3 py-1 text-xs font-extrabold text-white transition hover:brightness-110"
+                      className="rounded-full bg-status-perdido px-4 py-1.5 text-xs font-extrabold text-white transition hover:brightness-110"
                     >
                       Sí, eliminar
                     </button>
                     <button
                       type="button"
                       onClick={() => setConfirming(null)}
-                      className="rounded-full border border-stone-200 px-3 py-1 text-xs font-extrabold text-stone-500"
+                      className="rounded-full border border-stone-200 bg-white px-4 py-1.5 text-xs font-extrabold text-stone-500"
                     >
-                      No
+                      Cancelar
                     </button>
-                  </span>
-                ) : (
-                  <span className="flex items-center gap-1">
-                    <button
-                      type="button"
-                      onClick={() => setEditAtencion(a)}
-                      className="p-1.5 text-stone-300 transition hover:text-brand"
-                      aria-label="Editar atención"
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setConfirming(a.id)}
-                      className="p-1.5 text-stone-300 transition hover:text-status-perdido"
-                      aria-label="Eliminar atención"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
-                  </span>
-                )}
-              </div>
+                  </div>
+                </div>
+              )}
               <h3 className="mt-2 font-extrabold text-stone-900">{a.titulo}</h3>
               {a.detalle && (
                 <p className="mt-1 whitespace-pre-line text-sm text-stone-600">{a.detalle}</p>
