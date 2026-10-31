@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Loader2, X } from 'lucide-react'
 import { createAtencion, updateAtencion } from '../lib/store'
 
@@ -20,6 +20,21 @@ export default function AtencionFormModal({ open, onClose, onSaved, mascotaId, v
   const [notas, setNotas] = useState(atencion?.notas || '')
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
+
+  // Cada vez que el formulario se abre, arranca desde cero: en blanco si es
+  // una atención nueva, o con los datos de la atención solo si se está
+  // editando. Sin esto, el formulario heredaba los datos de la carga anterior.
+  useEffect(() => {
+    if (!open) return
+    setFecha(atencion?.fecha || new Date().toISOString().slice(0, 10))
+    setTipo(atencion?.tipo || 'vacuna')
+    setTitulo(atencion?.titulo || '')
+    setDetalle(atencion?.detalle || '')
+    setProximaFecha(atencion?.proxima_fecha || '')
+    setNotas(atencion?.notas || '')
+    setError('')
+    setSubmitting(false)
+  }, [open, atencion])
 
   if (!open) return null
 
