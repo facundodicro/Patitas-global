@@ -11,10 +11,11 @@ import {
   PawPrint,
   QrCode,
   ShieldCheck,
+  Stethoscope,
 } from 'lucide-react'
 import Logo from '../components/Logo'
 import { useAuth } from '../hooks/useAuth'
-import { createOwnerPet, uploadPetPhoto } from '../lib/store'
+import { createOwnerPet, getMyVeterinaria, uploadPetPhoto } from '../lib/store'
 import { qrDataURL } from '../lib/qr'
 
 const inputCls =
@@ -433,11 +434,74 @@ function RegisterForm() {
   )
 }
 
+/* ------------- Vista cuando la cuenta ya es de veterinaria ------------ */
+
+function VetAccountNotice() {
+  return (
+    <div className="mx-auto max-w-md animate-fade-up px-4 py-12">
+      <div className="rounded-3xl bg-white p-8 text-center shadow-card">
+        <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-brand-soft text-brand">
+          <Stethoscope className="h-7 w-7" />
+        </span>
+        <h1 className="mt-4 text-2xl font-extrabold text-stone-900">
+          Esta cuenta ya es de una veterinaria
+        </h1>
+        <p className="mt-3 text-sm text-stone-600">
+          Con este correo ya tenés tu veterinaria registrada en Patitas. Cada cuenta
+          tiene un solo rol: <strong>veterinaria o dueño</strong>. Si además querés
+          registrar a tu propia mascota como dueño, hacelo con otro correo.
+        </p>
+        <Link
+          to="/panel"
+          className="mt-7 flex w-full items-center justify-center gap-2 rounded-full bg-brand px-6 py-3 font-extrabold text-white transition hover:bg-brand-dark"
+        >
+          Ir a mi panel
+        </Link>
+        <Link
+          to="/"
+          className="mt-4 block text-center text-sm font-bold text-brand hover:underline"
+        >
+          Volver al inicio
+        </Link>
+      </div>
+    </div>
+  )
+}
+
 /* -------------------------------- Página ------------------------------ */
 
 export default function OwnerRegister() {
   const { user, loading } = useAuth()
-  if (loading) return <Spinner />
+  const [vet, setVet] = useState(null)
+  const [checking, setChecking] = useState(true)
+
+  useEffect(() => {
+    let mounted = true
+    async function check() {
+      if (!user) {
+        if (mounted) {
+          setVet(null)
+          setChecking(false)
+        }
+        return
+      }
+      try {
+        const v = await getMyVeterinaria(user.id)
+        if (mounted) setVet(v)
+      } catch {
+        if (mounted) setVet(null)
+      } finally {
+        if (mounted) setChecking(false)
+      }
+    }
+    if (!loading) check()
+    return () => {
+      mounted = false
+    }
+  }, [user, loading])
+
+  if (loading || checking) return <Spinner />
   if (!user) return <NeedAccount />
+  if (vet) return <VetAccountNotice />
   return <RegisterForm />
 }
