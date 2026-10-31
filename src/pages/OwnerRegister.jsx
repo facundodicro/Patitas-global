@@ -273,11 +273,16 @@ function RegisterForm() {
         onAnother={() => {
           setCreated(null)
           setNombre('')
+          setEspecie('Perro')
           setRaza('')
           setSenas('')
+          setDuenoNombre('')
+          setDuenoWhatsapp('')
           setFile(null)
           setPreview(null)
+          if (fileRef.current) fileRef.current.value = ''
           setConsentimiento(false)
+          setError('')
         }}
       />
     )
