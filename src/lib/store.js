@@ -549,6 +549,40 @@ export async function createAtencion({
   return row
 }
 
+/** Actualiza una atención ya registrada (corregir fecha, título, detalle…). */
+export async function updateAtencion(id, { fecha, tipo, titulo, detalle, proxima_fecha, notas }) {
+  if (!DEMO_MODE) {
+    const { data: row, error } = await supabase
+      .from('atenciones')
+      .update({
+        fecha,
+        tipo,
+        titulo,
+        detalle: detalle || null,
+        proxima_fecha: proxima_fecha || null,
+        notas: notas || null,
+      })
+      .eq('id', id)
+      .select()
+      .single()
+    if (error) throw error
+    return row
+  }
+  const a = demo.atenciones.find((x) => x.id === id)
+  if (a) {
+    Object.assign(a, {
+      fecha,
+      tipo,
+      titulo,
+      detalle: detalle || null,
+      proxima_fecha: proxima_fecha || null,
+      notas: notas || null,
+    })
+    saveDemo()
+  }
+  return a
+}
+
 /** Elimina una atención del historial. */
 export async function deleteAtencion(id) {
   if (!DEMO_MODE) {

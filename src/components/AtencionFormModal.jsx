@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Loader2, X } from 'lucide-react'
-import { createAtencion } from '../lib/store'
+import { createAtencion, updateAtencion } from '../lib/store'
 
 const TIPOS = [
   { value: 'vacuna', label: 'Vacuna', cls: 'bg-emerald-100 text-emerald-800' },
@@ -10,13 +10,14 @@ const TIPOS = [
   { value: 'otro', label: 'Otro', cls: 'bg-stone-200 text-stone-700' },
 ]
 
-export default function AtencionFormModal({ open, onClose, onSaved, mascotaId, veterinariaId }) {
-  const [fecha, setFecha] = useState(new Date().toISOString().slice(0, 10))
-  const [tipo, setTipo] = useState('vacuna')
-  const [titulo, setTitulo] = useState('')
-  const [detalle, setDetalle] = useState('')
-  const [proximaFecha, setProximaFecha] = useState('')
-  const [notas, setNotas] = useState('')
+export default function AtencionFormModal({ open, onClose, onSaved, mascotaId, veterinariaId, atencion = null }) {
+  const editing = !!atencion
+  const [fecha, setFecha] = useState(atencion?.fecha || new Date().toISOString().slice(0, 10))
+  const [tipo, setTipo] = useState(atencion?.tipo || 'vacuna')
+  const [titulo, setTitulo] = useState(atencion?.titulo || '')
+  const [detalle, setDetalle] = useState(atencion?.detalle || '')
+  const [proximaFecha, setProximaFecha] = useState(atencion?.proxima_fecha || '')
+  const [notas, setNotas] = useState(atencion?.notas || '')
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
 
@@ -31,16 +32,27 @@ export default function AtencionFormModal({ open, onClose, onSaved, mascotaId, v
     }
     setSubmitting(true)
     try {
-      await createAtencion({
-        mascota_id: mascotaId,
-        veterinaria_id: veterinariaId,
-        fecha,
-        tipo,
-        titulo: titulo.trim(),
-        detalle: detalle.trim(),
-        proxima_fecha: proximaFecha || null,
-        notas: notas.trim(),
-      })
+      if (editing) {
+        await updateAtencion(atencion.id, {
+          fecha,
+          tipo,
+          titulo: titulo.trim(),
+          detalle: detalle.trim(),
+          proxima_fecha: proximaFecha || null,
+          notas: notas.trim(),
+        })
+      } else {
+        await createAtencion({
+          mascota_id: mascotaId,
+          veterinaria_id: veterinariaId,
+          fecha,
+          tipo,
+          titulo: titulo.trim(),
+          detalle: detalle.trim(),
+          proxima_fecha: proximaFecha || null,
+          notas: notas.trim(),
+        })
+      }
       onSaved?.()
       onClose()
     } catch (err) {
@@ -64,7 +76,9 @@ export default function AtencionFormModal({ open, onClose, onSaved, mascotaId, v
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between mb-5">
-          <h2 className="text-xl font-extrabold text-stone-900">Nueva atención</h2>
+          <h2 className="text-xl font-extrabold text-stone-900">
+            {editing ? 'Editar atención' : 'Nueva atención'}
+          </h2>
           <button
             type="button"
             onClick={onClose}
@@ -155,7 +169,7 @@ export default function AtencionFormModal({ open, onClose, onSaved, mascotaId, v
             className="w-full rounded-xl bg-brand hover:bg-brand-light text-white font-extrabold py-3 text-base shadow-card transition disabled:opacity-60 flex items-center justify-center gap-2"
           >
             {submitting && <Loader2 className="h-5 w-5 animate-spin" />}
-            {submitting ? 'Guardando…' : 'Guardar atención'}
+            {submitting ? 'Guardando…' : editing ? 'Guardar cambios' : 'Guardar atención'}
           </button>
         </form>
       </div>
