@@ -52,16 +52,43 @@ export function AuthProvider({ children }) {
       throw new Error('La contraseña tiene que tener al menos 6 caracteres.')
   }
 
-  const signUp = useCallback(async (email, password) => {
+  const signUp = useCallback(async (email, password, redirectPath) => {
     if (isSupabaseConfigured) {
-      const { data, error } = await supabase.auth.signUp({ email, password })
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: `${window.location.origin}${redirectPath || '/panel'}`,
+        },
+      })
       if (error) throw error
-      return data.user
+      // Con la confirmación por email activada, signUp no devuelve sesión:
+      // la cuenta queda pendiente hasta que el usuario abre el enlace del correo.
+      return {
+        user: data.user,
+        session: data.session,
+        pendingConfirmation: !data.session,
+      }
     }
     validateDemoCredentials(email, password)
     const u = { id: `demo-user-${Date.now()}`, email }
     persistDemo(u)
-    return u
+    return { user: u, session: { user: u }, pendingConfirmation: false }
+  }, [])
+
+  /** Reenvía el correo de confirmación de registro. */
+  const resendConfirmation = useCallback(async (email, redirectPath) => {
+    if (!isSupabaseConfigured) {
+      throw new Error('No está disponible en modo demo.')
+    }
+    const { error } = await supabase.auth.resend({
+      type: 'signup',
+      email,
+      options: {
+        emailRedirectTo: `${window.location.origin}${redirectPath || '/panel'}`,
+      },
+    })
+    if (error) throw error
   }, [])
 
   const signIn = useCallback(async (email, password) => {
@@ -129,6 +156,7 @@ export function AuthProvider({ children }) {
         user,
         loading,
         signUp,
+        resendConfirmation,
         signIn,
         signInWithGoogle,
         signOut,

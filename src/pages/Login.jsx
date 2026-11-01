@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom'
-import { Loader2 } from 'lucide-react'
+import { Loader2, MailCheck } from 'lucide-react'
 import Logo from '../components/Logo'
 import { useAuth } from '../hooks/useAuth'
 
@@ -32,6 +32,7 @@ export default function Login() {
     user,
     loading,
     signUp,
+    resendConfirmation,
     signIn,
     signInWithGoogle,
     recoveryMode,
@@ -47,6 +48,11 @@ export default function Login() {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
+  const [pendingEmail, setPendingEmail] = useState('')
+  const [resending, setResending] = useState(false)
+  const [resent, setResent] = useState(false)
+
+  const destino = location.state?.from || '/panel'
 
   if (loading) {
     return (
@@ -137,6 +143,66 @@ export default function Login() {
     )
   }
 
+  /* La cuenta quedó creada pero falta confirmar el correo */
+  if (pendingEmail) {
+    return (
+      <div className="mx-auto max-w-md animate-fade-up px-4 py-12">
+        <div className="rounded-3xl bg-white p-8 text-center shadow-card">
+          <div className="mb-6 flex justify-center">
+            <Logo />
+          </div>
+          <MailCheck className="mx-auto h-12 w-12 text-brand" />
+          <h1 className="mt-4 text-2xl font-extrabold text-stone-900">
+            Revisá tu correo
+          </h1>
+          <p className="mt-2 text-sm text-stone-500">
+            Te mandamos un mensaje a <strong>{pendingEmail}</strong> con un
+            enlace para activar tu cuenta. Tocá el enlace y volvés a Patitas ya
+            ingresado.
+          </p>
+          <p className="mt-3 text-sm text-stone-500">
+            ¿No llegó? Mirá en spam o correo no deseado. Si pasan unos minutos
+            y no aparece, te lo reenviamos:
+          </p>
+          {error && <p className="mt-4 text-sm font-bold text-status-perdido">{error}</p>}
+          {resent && (
+            <p className="mt-4 text-sm font-bold text-brand">
+              ¡Listo! Te reenviamos el correo de confirmación.
+            </p>
+          )}
+          <button
+            type="button"
+            disabled={resending}
+            onClick={async () => {
+              setError('')
+              setResent(false)
+              setResending(true)
+              try {
+                await resendConfirmation(pendingEmail, destino)
+                setResent(true)
+              } catch (err) {
+                setError(err.message || 'No pudimos reenviarlo. Probá de nuevo en un rato.')
+              } finally {
+                setResending(false)
+              }
+            }}
+            className="mt-6 flex w-full items-center justify-center gap-2 rounded-full bg-brand px-6 py-3 font-extrabold text-white transition hover:bg-brand-dark disabled:opacity-60"
+          >
+            {resending && <Loader2 className="h-5 w-5 animate-spin" />}
+            Reenviar el correo
+          </button>
+          <button
+            type="button"
+            onClick={() => { setPendingEmail(''); setTab('ingresar'); setError(''); setResent(false) }}
+            className="mt-4 w-full text-center text-sm font-bold text-stone-500 hover:underline"
+          >
+            Ya lo confirmé, quiero ingresar
+          </button>
+        </div>
+      </div>
+    )
+  }
+
   if (user) {
     return <Navigate to={location.state?.from || '/panel'} replace />
   }
@@ -153,16 +219,27 @@ export default function Login() {
         await resetPassword(email)
         setSuccess('Te enviamos un email con el enlace para crear una contraseña nueva.')
       } else if (tab === 'ingresar') {
-        const { error: err } = await signIn(email, password)
-        if (err) throw err
+        await signIn(email, password)
+        navigate(destino, { replace: true })
       } else {
-        const { error: err } = await signUp(email, password)
-        if (err) throw err
-        setSuccess('¡Cuenta creada! Ya podés usar Patitas.')
+        const res = await signUp(email, password, destino)
+        if (res?.pendingConfirmation) {
+          setPendingEmail(email)
+          setResent(false)
+        } else {
+          setSuccess('¡Cuenta creada! Ya podés usar Patitas.')
+          navigate(destino, { replace: true })
+        }
       }
-      if (!isRecover) navigate(location.state?.from || '/panel', { replace: true })
     } catch (err) {
-      setError(err.message || 'Ocurrió un error. Probá de nuevo.')
+      if (err?.message && /email not confirmed/i.test(err.message)) {
+        // La cuenta existe pero el correo todavía no fue confirmado.
+        setPendingEmail(email)
+        setResent(false)
+        setError('')
+      } else {
+        setError(err.message || 'Ocurrió un error. Probá de nuevo.')
+      }
     } finally {
       setSubmitting(false)
     }
