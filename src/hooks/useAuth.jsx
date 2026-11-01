@@ -6,7 +6,7 @@ const LS_AUTH = 'patitas_demo_auth'
 
 /**
  * Sesión de usuario.
- * - Con Supabase: usa Supabase Auth (email/contraseña + Google OAuth).
+ * - Con Supabase: usa Supabase Auth (email/contraseña).
  * - Sin Supabase (modo demo): sesión local en localStorage para probar los flujos.
  */
 export function AuthProvider({ children }) {
@@ -104,20 +104,6 @@ export function AuthProvider({ children }) {
     return u
   }, [])
 
-  const signInWithGoogle = useCallback(async () => {
-    if (isSupabaseConfigured) {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: { redirectTo: window.location.origin },
-      })
-      if (error) throw error
-      return
-    }
-    const u = { id: `demo-google-${Date.now()}`, email: 'usuario.demo@gmail.com' }
-    persistDemo(u)
-    return u
-  }, [])
-
   const signOut = useCallback(async () => {
     if (isSupabaseConfigured) {
       await supabase.auth.signOut()
@@ -158,7 +144,6 @@ export function AuthProvider({ children }) {
         signUp,
         resendConfirmation,
         signIn,
-        signInWithGoogle,
         signOut,
         isAdmin,
         recoveryMode,
