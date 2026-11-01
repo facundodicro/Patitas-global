@@ -4,8 +4,11 @@ import {
   CalendarDays,
   Camera,
   Check,
+  ChevronDown,
   Loader2,
+  Lock,
   LogOut,
+  MessageCircle,
   PawPrint,
   Pencil,
   Plus,
@@ -21,6 +24,7 @@ import PetFormModal from '../components/PetFormModal'
 import QrPlateModal from '../components/QrPlateModal'
 import AtencionFormModal from '../components/AtencionFormModal'
 import { useAuth } from '../hooks/useAuth'
+import { waLink } from '../lib/qr'
 import {
   createVeterinaria,
   DEMO_MODE,
@@ -43,6 +47,25 @@ function Spinner() {
 const inputCls =
   'w-full rounded-xl border border-stone-300 px-4 py-2.5 outline-none transition focus:border-brand focus:ring-2 focus:ring-brand-soft'
 const labelCls = 'mb-1 block text-sm font-bold text-stone-700'
+
+const TIPOS = [
+  { value: 'vacuna', label: 'Vacuna', cls: 'bg-emerald-100 text-emerald-800' },
+  { value: 'tratamiento', label: 'Tratamiento', cls: 'bg-amber-100 text-amber-800' },
+  { value: 'visita', label: 'Visita', cls: 'bg-sky-100 text-sky-800' },
+  { value: 'cirugia', label: 'Cirugía', cls: 'bg-rose-100 text-rose-800' },
+  { value: 'otro', label: 'Otro', cls: 'bg-stone-200 text-stone-700' },
+]
+
+const tipoMeta = (t) => TIPOS.find((x) => x.value === t) ?? TIPOS[TIPOS.length - 1]
+
+function formatFecha(iso) {
+  if (!iso) return ''
+  const [y, m, d] = String(iso).split('-')
+  return d && m && y ? `${d}/${m}/${y}` : iso
+}
+
+/** WhatsApp de Facundo: es el canal de activación del panel. */
+const WHATSAPP_FACUNDO = '5492262591262'
 
 /* ------------------------- Login de veterinarias ------------------------ */
 
@@ -399,6 +422,64 @@ function VetProfileModal({ onClose, onSaved, veterinaria }) {
   )
 }
 
+/* --------------------- Pantalla de activación ------------------------- */
+/* El panel nace cerrado: la veterinaria se registra gratis, pero para
+   empezar a usarlo Facundo lo activa a mano cuando paga la suscripción.
+   SIN precio en pantalla (regla de Facundo: el precio se habla por
+   WhatsApp). Si la suscripción se pausa, esta misma pantalla vuelve:
+   las fichas públicas de los pacientes siguen vivas. */
+
+function ActivationScreen({ veterinaria }) {
+  const { signOut } = useAuth()
+  const navigate = useNavigate()
+  const wa = waLink(
+    WHATSAPP_FACUNDO,
+    `Hola Facundo, soy de ${veterinaria.nombre}. Me registré en Patitas y quiero activar mi panel.`,
+  )
+
+  async function handleSignOut() {
+    await signOut()
+    navigate('/')
+  }
+
+  return (
+    <div className="mx-auto max-w-md animate-fade-up px-4 py-12">
+      <div className="rounded-3xl bg-white p-8 text-center shadow-card">
+        <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-brand-soft text-brand">
+          <Lock className="h-7 w-7" />
+        </span>
+        <h1 className="mt-4 text-2xl font-extrabold text-stone-900">
+          Tu panel está listo, falta activarlo
+        </h1>
+        <p className="mt-3 text-sm text-stone-600">
+          Registraste <strong>{veterinaria.nombre}</strong> en Patitas. Para
+          empezar a cargar pacientes, generar sus códigos QR y cargar sus
+          atenciones, escribile a Facundo por WhatsApp y te lo activa.
+        </p>
+        <a
+          href={wa}
+          target="_blank"
+          rel="noreferrer"
+          className="mt-6 flex w-full items-center justify-center gap-2 rounded-full bg-[#25D366] px-6 py-3 font-extrabold text-white transition hover:brightness-95"
+        >
+          <MessageCircle className="h-5 w-5" /> Activar mi panel por WhatsApp
+        </a>
+        <p className="mt-4 rounded-xl bg-stone-50 px-4 py-3 text-xs text-stone-500">
+          Tus fichas públicas siguen activas: si un paciente tuyo se pierde,
+          quien lo encuentre escanea su QR y te avisa directo a tu WhatsApp.
+        </p>
+        <button
+          type="button"
+          onClick={handleSignOut}
+          className="mt-5 inline-flex items-center gap-1.5 text-sm font-extrabold text-stone-500 transition hover:text-stone-800"
+        >
+          <LogOut className="h-4 w-4" /> Salir
+        </button>
+      </div>
+    </div>
+  )
+}
+
 /* ------------------------------ Dashboard ------------------------------- */
 
 function Dashboard({ veterinaria, onProfileUpdated }) {
@@ -413,6 +494,28 @@ function Dashboard({ veterinaria, onProfileUpdated }) {
   const [successPet, setSuccessPet] = useState(null)
   const [atencionPet, setAtencionPet] = useState(null)
   const [profileOpen, setProfileOpen] = useState(false)
+  const [expandedId, setExpandedId] = useState(null)
+  const [historiales, setHistoriales] = useState({})
+  const [histLoading, setHistLoading] = useState(null)
+
+  async function loadHist(petId) {
+    setHistLoading(petId)
+    try {
+      const at = await listAtenciones(petId).catch(() => [])
+      setHistoriales((prev) => ({ ...prev, [petId]: at }))
+    } finally {
+      setHistLoading(null)
+    }
+  }
+
+  function toggleExpand(p) {
+    if (expandedId === p.id) {
+      setExpandedId(null)
+      return
+    }
+    setExpandedId(p.id)
+    if (!historiales[p.id]) loadHist(p.id)
+  }
 
   async function refresh() {
     const list = await listVetPets(veterinaria.id)
@@ -425,6 +528,10 @@ function Dashboard({ veterinaria, onProfileUpdated }) {
       }),
     )
     setUltimas(map)
+    if (expandedId) {
+      const at = await listAtenciones(expandedId).catch(() => [])
+      setHistoriales((prev) => ({ ...prev, [expandedId]: at }))
+    }
   }
 
   useEffect(() => {
@@ -531,13 +638,19 @@ function Dashboard({ veterinaria, onProfileUpdated }) {
         <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {filtered.map((p) => {
             const ultima = ultimas[p.id]
+            const expanded = expandedId === p.id
+            const historial = historiales[p.id]
             return (
               <div
                 key={p.id}
-                className="cursor-pointer rounded-3xl bg-white p-5 shadow-card transition hover:-translate-y-0.5 hover:shadow-pop"
-                onClick={() => navigate(`/m/${p.id}`)}
+                className={`rounded-3xl bg-white p-5 shadow-card transition ${
+                  expanded ? 'sm:col-span-2 lg:col-span-3' : 'hover:-translate-y-0.5 hover:shadow-pop'
+                }`}
               >
-                <div className="flex items-center gap-4">
+                <div
+                  className="flex cursor-pointer items-center gap-4"
+                  onClick={() => toggleExpand(p)}
+                >
                   <PetPhoto
                     src={p.foto_url}
                     alt={p.nombre}
@@ -568,17 +681,88 @@ function Dashboard({ veterinaria, onProfileUpdated }) {
                   >
                     <QrCode className="h-5 w-5" />
                   </button>
+                  <ChevronDown
+                    className={`h-5 w-5 shrink-0 text-stone-400 transition-transform ${
+                      expanded ? 'rotate-180' : ''
+                    }`}
+                  />
                 </div>
                 <div className="mt-3 border-t border-stone-100 pt-3">
                   {ultima ? (
                     <p className="flex items-center gap-1.5 text-xs font-bold text-stone-500">
                       <CalendarDays className="h-3.5 w-3.5" />
                       Última atención: {ultima.titulo}
+                      {ultima.proxima_fecha &&
+                        ` · Próxima: ${formatFecha(ultima.proxima_fecha)}`}
                     </p>
                   ) : (
                     <p className="text-xs font-bold text-stone-400">Sin atenciones todavía</p>
                   )}
                 </div>
+                {expanded && (
+                  <div className="mt-3 border-t border-stone-100 pt-4">
+                    <h4 className="text-sm font-extrabold text-stone-800">
+                      Historial de atenciones
+                    </h4>
+                    {histLoading === p.id && !historial ? (
+                      <p className="mt-3 flex items-center gap-2 text-sm font-bold text-stone-400">
+                        <Loader2 className="h-4 w-4 animate-spin" /> Cargando…
+                      </p>
+                    ) : !historial || historial.length === 0 ? (
+                      <p className="mt-2 text-sm text-stone-500">
+                        Todavía no cargaste atenciones de {p.nombre}.
+                      </p>
+                    ) : (
+                      <div className="mt-3 space-y-2.5">
+                        {historial.map((a) => {
+                          const meta = tipoMeta(a.tipo)
+                          return (
+                            <div key={a.id} className="rounded-2xl bg-stone-50 px-4 py-3">
+                              <div className="flex flex-wrap items-center gap-2">
+                                <span
+                                  className={`rounded-full px-2.5 py-0.5 text-[11px] font-extrabold ${meta.cls}`}
+                                >
+                                  {meta.label}
+                                </span>
+                                <span className="inline-flex items-center gap-1 text-[11px] font-bold text-stone-500">
+                                  <CalendarDays className="h-3 w-3" />
+                                  {formatFecha(a.fecha)}
+                                </span>
+                                {a.proxima_fecha && (
+                                  <span className="rounded-full bg-amber-100 px-2.5 py-0.5 text-[11px] font-extrabold text-amber-700">
+                                    Próxima: {formatFecha(a.proxima_fecha)}
+                                  </span>
+                                )}
+                              </div>
+                              <p className="mt-1.5 font-extrabold text-stone-900">{a.titulo}</p>
+                              {a.detalle && (
+                                <p className="mt-0.5 whitespace-pre-line text-sm text-stone-600">
+                                  {a.detalle}
+                                </p>
+                              )}
+                            </div>
+                          )
+                        })}
+                      </div>
+                    )}
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setAtencionPet(p)}
+                        className="inline-flex items-center gap-1.5 rounded-full bg-brand px-4 py-2 text-sm font-extrabold text-white transition hover:bg-brand-dark"
+                      >
+                        <Plus className="h-4 w-4" /> Nueva atención
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => navigate(`/m/${p.id}`)}
+                        className="inline-flex items-center gap-1.5 rounded-full border-2 border-stone-200 px-4 py-2 text-sm font-extrabold text-stone-600 transition hover:border-stone-300"
+                      >
+                        Ver ficha completa
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             )
           })}
@@ -749,5 +933,8 @@ export default function VetPanel() {
   if (!user) return <VetLogin />
   if (!veterinaria && hasPets) return <OwnerAccountNotice />
   if (!veterinaria) return <VetRegister onSaved={setVeterinaria} />
+  // Puerta de activación: solo frena el false EXPLÍCITO. Si la columna
+  // todavía no existe en la base (migración pendiente), no se bloquea a nadie.
+  if (veterinaria.activa === false) return <ActivationScreen veterinaria={veterinaria} />
   return <Dashboard veterinaria={veterinaria} onProfileUpdated={setVeterinaria} />
 }

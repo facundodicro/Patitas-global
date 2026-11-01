@@ -69,6 +69,7 @@ export const seedVeterinarias = [
     whatsapp: '5492262000000',
     direccion: 'Av. 58 1234, Necochea',
     logo_url: null,
+    activa: true,
     created_at: daysAgo(60),
   },
 ]

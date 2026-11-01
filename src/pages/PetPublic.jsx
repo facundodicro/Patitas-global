@@ -79,7 +79,9 @@ export default function PetPublic() {
     let owner = false
     if (user) {
       const mine = await getMyVeterinaria(user.id).catch(() => null)
-      vet = !!mine && mine.id === pub.pet.veterinaria_id
+      // Con la suscripción en pausa (activa === false) la veterinaria ve la
+      // ficha como el público: el QR sigue vivo, pero su vista clínica no.
+      vet = !!mine && mine.id === pub.pet.veterinaria_id && mine.activa !== false
       if (vet) {
         full = await getPetWithVeterinaria(id)
       } else {

@@ -166,7 +166,10 @@ export async function getVeterinaria(id) {
   return demo.veterinarias.find((v) => v.id === id) ?? null
 }
 
-/** Registra la veterinaria del usuario. */
+/** Registra la veterinaria del usuario.
+ * La puerta de activación vive en la base: la columna `activa` nace en
+ * false (default) y Facundo la pasa a true cuando la veterinaria paga.
+ * Acá no se manda el campo: el default de la base manda. */
 export async function createVeterinaria(userId, { nombre, whatsapp, direccion, logo_url }) {
   if (!DEMO_MODE) {
     const { data: row, error } = await supabase
@@ -184,6 +187,7 @@ export async function createVeterinaria(userId, { nombre, whatsapp, direccion, l
     whatsapp,
     direccion: direccion || null,
     logo_url: logo_url || null,
+    activa: false,
     created_at: new Date().toISOString(),
   }
   demo.veterinarias.push(row)
