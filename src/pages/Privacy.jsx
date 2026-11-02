@@ -5,7 +5,7 @@ const SECCIONES = [
   },
   {
     h: '2. Qué datos recopilamos',
-    p: 'De la veterinaria (cuenta): email, nombre, WhatsApp y datos del negocio. De las mascotas: nombre, especie, edad, señas particulares y foto. De los dueños: nombre y número de WhatsApp, que los carga su veterinaria al registrar al paciente. La contraseña de tu cuenta se guarda cifrada, nunca en texto plano.',
+    p: 'De la veterinaria (cuenta): email, nombre, WhatsApp y datos del negocio. De las mascotas: nombre, especie, edad, señas particulares y foto. De los dueños que se registran por su cuenta: nombre y número de WhatsApp, con su consentimiento expreso para mostrar ese número en la ficha pública de su mascota. Cuando la mascota es paciente de una veterinaria, esos datos los carga la veterinaria al registrarla. La contraseña de tu cuenta se guarda cifrada, nunca en texto plano.',
   },
   {
     h: '3. Para qué usamos tus datos',
@@ -32,7 +32,11 @@ const SECCIONES = [
     p: 'Tenés derecho a acceder, rectificar, actualizar y suprimir tus datos personales, conforme a la Ley 25.326 de Protección de Datos Personales. Para ejercerlos, escribí a facundodicroce76@gmail.com indicando tu pedido. El responsable tramita la inscripción de la base de datos ante el Registro Nacional de Bases de Datos de la AAIP.',
   },
   {
-    h: '9. Cambios en esta política',
+    h: '9. Quién puede usar Patitas',
+    p: 'Patitas está dirigido a personas mayores de 18 años. Si sos menor de edad, el registro debe realizarlo tu madre, padre o tutor, que es quien consiente la publicación del número de contacto.',
+  },
+  {
+    h: '10. Cambios en esta política',
     p: 'Si modificamos esta política, publicaremos la versión actualizada en esta página.',
   },
 ]
@@ -44,7 +48,7 @@ export default function Privacy() {
       <div className="overflow-hidden rounded-3xl bg-white shadow-card">
         <div className="p-6 sm:p-10">
           <h1 className="text-3xl font-extrabold text-stone-900">Política de Privacidad</h1>
-          <p className="mt-2 text-xs text-stone-500">Última actualización: 16 de octubre de 2026</p>
+          <p className="mt-2 text-xs text-stone-500">Última actualización: 2 de noviembre de 2026</p>
           <div className="mt-6 space-y-6">
             {SECCIONES.map((s) => (
               <div key={s.h}>
