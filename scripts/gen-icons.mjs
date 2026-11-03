@@ -71,6 +71,10 @@ function inCircle(x, y, cx, cy, r) {
   return (x - cx) ** 2 + (y - cy) ** 2 <= r * r
 }
 
+function inEllipse(x, y, cx, cy, rw, rh) {
+  return ((x - cx) / rw) ** 2 + ((y - cy) / rh) ** 2 <= 1
+}
+
 function inTriangle(x, y, ax, ay, bx, by, cx, cy) {
   const s1 = (x - bx) * (ay - by) - (ax - bx) * (y - by)
   const s2 = (x - cx) * (by - cy) - (bx - cx) * (y - cy)
@@ -88,23 +92,23 @@ function inRect(x, y, x0, y0, x1, y1) {
 function colorAt(x, y) {
   let c = null
   // fondo verde redondeado
-  if (inRoundRect(x, y, 0.035, 0.035, 0.965, 0.965, 0.185)) c = GREEN
-  // pin crema: círculo + triángulo tangente
+  if (inRoundRect(x, y, 0.035, 0.035, 0.965, 0.965, 0.205)) c = GREEN
+  // pin gota crema: elipse vertical rellena + triángulo de punta
   if (
-    inCircle(x, y, 0.5, 0.3698, 0.2186) ||
-    inTriangle(x, y, 0.3124, 0.482, 0.6876, 0.482, 0.5, 0.7961)
+    inEllipse(x, y, 0.5, 0.375, 0.25, 0.29) ||
+    inTriangle(x, y, 0.315, 0.535, 0.685, 0.535, 0.5, 0.86)
   ) {
     c = CREAM
   }
   // placa blanca del QR
-  if (inRoundRect(x, y, 0.382, 0.2518, 0.6181, 0.4879, 0.0331)) c = WHITE
-  // QR simplificado
+  if (inRoundRect(x, y, 0.353, 0.228, 0.647, 0.522, 0.0382)) c = WHITE
+  // QR simplificado: cuadrados gruesos y separados
   if (
-    inRect(x, y, 0.4186, 0.2884, 0.493, 0.3628) || // sup. izq.
-    inRect(x, y, 0.5071, 0.2884, 0.5815, 0.3628) || // sup. der.
-    inRect(x, y, 0.4186, 0.3769, 0.493, 0.4513) || // inf. izq.
-    inRect(x, y, 0.5107, 0.3805, 0.552, 0.4218) || // grupito der.
-    inRect(x, y, 0.5603, 0.43, 0.5851, 0.4548)
+    inRect(x, y, 0.3883, 0.2633, 0.4853, 0.3603) || // sup. izq.
+    inRect(x, y, 0.5147, 0.2633, 0.6117, 0.3603) || // sup. der.
+    inRect(x, y, 0.3883, 0.3897, 0.4853, 0.4867) || // inf. izq.
+    inRect(x, y, 0.5147, 0.3897, 0.5735, 0.4485) || // grupito der.
+    inRect(x, y, 0.5764, 0.4514, 0.6117, 0.4867)
   ) {
     c = BLACK
   }

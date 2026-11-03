@@ -1,11 +1,11 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" fill="none">
-  <rect x="1.68" y="1.68" width="44.64" height="44.64" rx="8.88" fill="#14532D"/>
-  <polygon points="15,23.14 33,23.14 24,38.21" fill="#F8EEDB"/>
-  <circle cx="24" cy="17.75" r="10.49" fill="#F8EEDB"/>
-  <rect x="18.34" y="12.09" width="11.33" height="11.33" rx="1.59" fill="#fff"/>
-  <rect x="20.09" y="13.84" width="3.57" height="3.57" fill="#0A0A0A"/>
-  <rect x="24.34" y="13.84" width="3.57" height="3.57" fill="#0A0A0A"/>
-  <rect x="20.09" y="18.09" width="3.57" height="3.57" fill="#0A0A0A"/>
-  <rect x="24.51" y="18.26" width="1.98" height="1.98" fill="#0A0A0A"/>
-  <rect x="26.89" y="20.64" width="1.19" height="1.19" fill="#0A0A0A"/>
+  <rect x="1.68" y="1.68" width="44.64" height="44.64" rx="9.84" fill="#14532D"/>
+  <polygon points="15.12,25.68 32.88,25.68 24,41.28" fill="#F8EEDB"/>
+  <ellipse cx="24" cy="18" rx="12" ry="13.92" fill="#F8EEDB"/>
+  <rect x="16.94" y="10.94" width="14.11" height="14.11" rx="1.83" fill="#fff"/>
+  <rect x="18.64" y="12.64" width="4.66" height="4.66" fill="#0A0A0A"/>
+  <rect x="24.70" y="12.64" width="4.66" height="4.66" fill="#0A0A0A"/>
+  <rect x="18.64" y="18.70" width="4.66" height="4.66" fill="#0A0A0A"/>
+  <rect x="24.70" y="18.70" width="2.82" height="2.82" fill="#0A0A0A"/>
+  <rect x="27.67" y="21.67" width="1.69" height="1.69" fill="#0A0A0A"/>
 </svg>
