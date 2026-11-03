@@ -35,7 +35,7 @@ function AnimatedWord({ text, className = '' }) {
 
 /**
  * Marca de Patitas (desde nov 2026): lupa de costado crema con un QR
- * adentro de la lente, sobre el verde propio de Patitas (#14532D).
+ * adentro de la lente, sobre el color de la app (teal #0F766E).
  * Reemplaza a la huellita genérica original. Wordmark en Nunito 800.
  * `variant="light"` para usar sobre fondos oscuros.
  * (El export conserva el nombre PawMark por compatibilidad con los
@@ -44,14 +44,14 @@ function AnimatedWord({ text, className = '' }) {
 export function PawMark({ className = 'h-9 w-9' }) {
   return (
     <svg viewBox="0 0 48 48" fill="none" className={className} aria-hidden="true">
-      {/* fondo verde */}
-      <rect x="1.68" y="1.68" width="44.64" height="44.64" rx="9.84" fill="#14532D" />
+      {/* fondo: el color de la app */}
+      <rect x="1.68" y="1.68" width="44.64" height="44.64" rx="9.84" fill="#0F766E" />
       {/* lupa de costado crema: mango a 45° + aro de la lente */}
       <line x1="29.48" y1="29.96" x2="34.06" y2="34.54" stroke="#F8EEDB" strokeWidth="4.22" strokeLinecap="round" />
       <circle cx="21.84" cy="22.32" r="12.24" fill="#F8EEDB" />
-      <circle cx="21.84" cy="22.32" r="8.98" fill="#14532D" />
-      {/* placa blanca del QR adentro de la lente */}
-      <rect x="17.04" y="17.52" width="9.6" height="9.6" rx="1.25" fill="#fff" />
+      <circle cx="21.84" cy="22.32" r="8.98" fill="#0F766E" />
+      {/* placa blanca del QR, grande: casi toca los bordes de la lente */}
+      <rect x="15.72" y="16.20" width="12.24" height="12.24" rx="1.59" fill="#fff" />
       {/* QR simplificado: cuadrados chicos con aire, no se apelmaza en chico */}
       <rect x="18.43" y="18.91" width="2.78" height="2.78" fill="#0A0A0A" />
       <rect x="22.46" y="18.91" width="2.78" height="2.78" fill="#0A0A0A" />

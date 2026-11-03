@@ -15,7 +15,7 @@ import { deflateSync } from 'node:zlib'
 const OUT = new URL('../public/icons/', import.meta.url)
 mkdirSync(OUT, { recursive: true })
 
-const GREEN = [20, 83, 45, 255] // #14532D
+const GREEN = [15, 118, 110, 255] // #0F766E — el color de la app
 const CREAM = [248, 238, 219, 255] // #F8EEDB
 const WHITE = [255, 255, 255, 255]
 const BLACK = [10, 10, 10, 255]
@@ -110,8 +110,8 @@ function colorAt(x, y) {
     c = CREAM
   }
   if (inCircle(x, y, 0.455, 0.465, 0.187)) c = GREEN
-  // placa blanca del QR adentro de la lente
-  if (inRoundRect(x, y, 0.355, 0.365, 0.555, 0.565, 0.026)) c = WHITE
+  // placa blanca del QR, grande: casi toca los bordes de la lente
+  if (inRoundRect(x, y, 0.3275, 0.3375, 0.5825, 0.5925, 0.0332)) c = WHITE
   // QR simplificado: cuadrados chicos con aire
   if (
     inRect(x, y, 0.384, 0.394, 0.442, 0.452) || // sup. izq.
