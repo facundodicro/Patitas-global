@@ -1,6 +1,11 @@
 /**
- * Genera public/icons/icon-192.png e icon-512.png con Node puro (sin dependencias):
- * fondo teal redondeado + huella blanca dibujada con círculos y elipses.
+ * Genera public/icons/icon-192.png e icon-512.png con Node puro (sin dependencias).
+ *
+ * Marca actual (nov 2026): pin de ubicación crema con un QR adentro sobre el
+ * verde propio de Patitas (#14532D) — reemplaza a la huellita teal original.
+ * La geometría es la MISMA que la del favicon.svg y el componente Logo.jsx
+ * (coordenadas como fracciones del lienzo). Se dibuja con sobremuestreo x4
+ * y se promedia, para que los bordes queden suaves.
  *
  * Uso: node scripts/gen-icons.mjs
  */
@@ -10,8 +15,10 @@ import { deflateSync } from 'node:zlib'
 const OUT = new URL('../public/icons/', import.meta.url)
 mkdirSync(OUT, { recursive: true })
 
-const TEAL = [15, 118, 110, 255]
+const GREEN = [20, 83, 45, 255] // #14532D
+const CREAM = [248, 238, 219, 255] // #F8EEDB
 const WHITE = [255, 255, 255, 255]
+const BLACK = [10, 10, 10, 255]
 
 function crc32(buf) {
   let table = crc32.table
@@ -52,46 +59,82 @@ function encodePNG(width, height, rgba) {
   return Buffer.concat([sig, chunk('IHDR', ihdr), chunk('IDAT', deflateSync(raw)), chunk('IEND', Buffer.alloc(0))])
 }
 
-/** Lienzo RGBA con primitivas de dibujo. */
-function canvas(size) {
-  const px = Buffer.alloc(size * size * 4)
-  const set = (x, y, c) => {
-    if (x < 0 || y < 0 || x >= size || y >= size) return
-    const i = (y * size + x) * 4
-    px[i] = c[0]; px[i + 1] = c[1]; px[i + 2] = c[2]; px[i + 3] = c[3]
+// --- Geometría de la marca (fracciones 0..1 del lienzo) ---
+
+function inRoundRect(x, y, x0, y0, x1, y1, rad) {
+  const cx = Math.min(Math.max(x, x0 + rad), x1 - rad)
+  const cy = Math.min(Math.max(y, y0 + rad), y1 - rad)
+  return (x - cx) ** 2 + (y - cy) ** 2 <= rad * rad
+}
+
+function inCircle(x, y, cx, cy, r) {
+  return (x - cx) ** 2 + (y - cy) ** 2 <= r * r
+}
+
+function inTriangle(x, y, ax, ay, bx, by, cx, cy) {
+  const s1 = (x - bx) * (ay - by) - (ax - bx) * (y - by)
+  const s2 = (x - cx) * (by - cy) - (bx - cx) * (y - cy)
+  const s3 = (x - ax) * (cy - ay) - (cx - ax) * (y - ay)
+  const neg = s1 < 0 || s2 < 0 || s3 < 0
+  const pos = s1 > 0 || s2 > 0 || s3 > 0
+  return !(neg && pos)
+}
+
+function inRect(x, y, x0, y0, x1, y1) {
+  return x >= x0 && x <= x1 && y >= y0 && y <= y1
+}
+
+/** Color de la marca en el punto (x, y); null = transparente. */
+function colorAt(x, y) {
+  let c = null
+  // fondo verde redondeado
+  if (inRoundRect(x, y, 0.035, 0.035, 0.965, 0.965, 0.185)) c = GREEN
+  // pin crema: círculo + triángulo tangente
+  if (
+    inCircle(x, y, 0.5, 0.3698, 0.2186) ||
+    inTriangle(x, y, 0.3124, 0.482, 0.6876, 0.482, 0.5, 0.7961)
+  ) {
+    c = CREAM
   }
-  // fondo teal con esquinas redondeadas
-  const r = size * 0.22
+  // placa blanca del QR
+  if (inRoundRect(x, y, 0.382, 0.2518, 0.6181, 0.4879, 0.0331)) c = WHITE
+  // QR simplificado
+  if (
+    inRect(x, y, 0.4186, 0.2884, 0.493, 0.3628) || // sup. izq.
+    inRect(x, y, 0.5071, 0.2884, 0.5815, 0.3628) || // sup. der.
+    inRect(x, y, 0.4186, 0.3769, 0.493, 0.4513) || // inf. izq.
+    inRect(x, y, 0.5107, 0.3805, 0.552, 0.4218) || // grupito der.
+    inRect(x, y, 0.5603, 0.43, 0.5851, 0.4548)
+  ) {
+    c = BLACK
+  }
+  return c
+}
+
+function canvas(size) {
+  const SS = 4
+  const px = Buffer.alloc(size * size * 4)
   for (let y = 0; y < size; y++) {
     for (let x = 0; x < size; x++) {
-      const cx = Math.min(Math.max(x, r), size - r)
-      const cy = Math.min(Math.max(y, r), size - r)
-      if ((x - cx) ** 2 + (y - cy) ** 2 <= r * r) set(x, y, TEAL)
-    }
-  }
-  const ellipse = (ex, ey, rx, ry, rot, color) => {
-    const cos = Math.cos(rot), sin = Math.sin(rot)
-    const x0 = Math.floor(ex - rx - ry), x1 = Math.ceil(ex + rx + ry)
-    const y0 = Math.floor(ey - rx - ry), y1 = Math.ceil(ey + rx + ry)
-    for (let y = y0; y <= y1; y++) {
-      for (let x = x0; x <= x1; x++) {
-        const dx = x - ex, dy = y - ey
-        const lx = dx * cos + dy * sin
-        const ly = -dx * sin + dy * cos
-        if ((lx / rx) ** 2 + (ly / ry) ** 2 <= 1) set(x, y, color)
+      let r = 0, g = 0, b = 0, a = 0
+      for (let sy = 0; sy < SS; sy++) {
+        for (let sx = 0; sx < SS; sx++) {
+          const fx = (x + (sx + 0.5) / SS) / size
+          const fy = (y + (sy + 0.5) / SS) / size
+          const c = colorAt(fx, fy)
+          if (c) {
+            r += c[0]; g += c[1]; b += c[2]; a += c[3]
+          }
+        }
       }
+      const n = SS * SS
+      const i = (y * size + x) * 4
+      px[i] = Math.round(r / n)
+      px[i + 1] = Math.round(g / n)
+      px[i + 2] = Math.round(b / n)
+      px[i + 3] = Math.round(a / n)
     }
   }
-  // huella blanca (coordenadas relativas al viewBox 48x48 del favicon)
-  const s = size / 48
-  const P = (v) => v * s
-  // almohadilla: elipse ancha
-  ellipse(P(24), P(29), P(8.6), P(6.2), 0, WHITE)
-  // dedos
-  ellipse(P(13.5), P(20.5), P(3.1), P(4), -0.31, WHITE)
-  ellipse(P(20), P(14.5), P(3.1), P(4), -0.1, WHITE)
-  ellipse(P(28), P(14.5), P(3.1), P(4), 0.1, WHITE)
-  ellipse(P(34.5), P(20.5), P(3.1), P(4), 0.31, WHITE)
   return px
 }
 
