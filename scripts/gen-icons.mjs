@@ -75,6 +75,15 @@ function inEllipse(x, y, cx, cy, rw, rh) {
   return ((x - cx) / rw) ** 2 + ((y - cy) / rh) ** 2 <= 1
 }
 
+function nearSegment(x, y, ax, ay, bx, by, rad) {
+  const dx = bx - ax
+  const dy = by - ay
+  const t = Math.min(1, Math.max(0, ((x - ax) * dx + (y - ay) * dy) / (dx * dx + dy * dy)))
+  const px = ax + t * dx
+  const py = ay + t * dy
+  return (x - px) ** 2 + (y - py) ** 2 <= rad * rad
+}
+
 function inTriangle(x, y, ax, ay, bx, by, cx, cy) {
   const s1 = (x - bx) * (ay - by) - (ax - bx) * (y - by)
   const s2 = (x - cx) * (by - cy) - (bx - cx) * (y - cy)
@@ -93,22 +102,23 @@ function colorAt(x, y) {
   let c = null
   // fondo verde redondeado
   if (inRoundRect(x, y, 0.035, 0.035, 0.965, 0.965, 0.205)) c = GREEN
-  // pin gota crema: elipse vertical rellena + triángulo de punta
+  // lupa de costado crema: mango a 45° + aro (círculo crema, interior verde)
   if (
-    inEllipse(x, y, 0.5, 0.375, 0.25, 0.29) ||
-    inTriangle(x, y, 0.315, 0.535, 0.685, 0.535, 0.5, 0.86)
+    nearSegment(x, y, 0.6141, 0.6241, 0.7096, 0.7196, 0.044) ||
+    inCircle(x, y, 0.455, 0.465, 0.255)
   ) {
     c = CREAM
   }
-  // placa blanca del QR
-  if (inRoundRect(x, y, 0.353, 0.228, 0.647, 0.522, 0.0382)) c = WHITE
-  // QR simplificado: cuadrados gruesos y separados
+  if (inCircle(x, y, 0.455, 0.465, 0.187)) c = GREEN
+  // placa blanca del QR adentro de la lente
+  if (inRoundRect(x, y, 0.355, 0.365, 0.555, 0.565, 0.026)) c = WHITE
+  // QR simplificado: cuadrados chicos con aire
   if (
-    inRect(x, y, 0.3883, 0.2633, 0.4853, 0.3603) || // sup. izq.
-    inRect(x, y, 0.5147, 0.2633, 0.6117, 0.3603) || // sup. der.
-    inRect(x, y, 0.3883, 0.3897, 0.4853, 0.4867) || // inf. izq.
-    inRect(x, y, 0.5147, 0.3897, 0.5735, 0.4485) || // grupito der.
-    inRect(x, y, 0.5764, 0.4514, 0.6117, 0.4867)
+    inRect(x, y, 0.384, 0.394, 0.442, 0.452) || // sup. izq.
+    inRect(x, y, 0.468, 0.394, 0.526, 0.452) || // sup. der.
+    inRect(x, y, 0.384, 0.478, 0.442, 0.536) || // inf. izq.
+    inRect(x, y, 0.468, 0.478, 0.503, 0.513) || // grupito der.
+    inRect(x, y, 0.504, 0.514, 0.525, 0.535)
   ) {
     c = BLACK
   }

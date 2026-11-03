@@ -34,9 +34,9 @@ function AnimatedWord({ text, className = '' }) {
 }
 
 /**
- * Marca de Patitas (desde nov 2026): pin de ubicación crema con un QR
- * adentro, sobre el verde propio de Patitas (#14532D). Reemplaza a la
- * huellita genérica original. Wordmark en Nunito 800.
+ * Marca de Patitas (desde nov 2026): lupa de costado crema con un QR
+ * adentro de la lente, sobre el verde propio de Patitas (#14532D).
+ * Reemplaza a la huellita genérica original. Wordmark en Nunito 800.
  * `variant="light"` para usar sobre fondos oscuros.
  * (El export conserva el nombre PawMark por compatibilidad con los
  * componentes que ya lo importan.)
@@ -46,17 +46,18 @@ export function PawMark({ className = 'h-9 w-9' }) {
     <svg viewBox="0 0 48 48" fill="none" className={className} aria-hidden="true">
       {/* fondo verde */}
       <rect x="1.68" y="1.68" width="44.64" height="44.64" rx="9.84" fill="#14532D" />
-      {/* pin gota crema: elipse rellena + punta */}
-      <polygon points="15.12,25.68 32.88,25.68 24,41.28" fill="#F8EEDB" />
-      <ellipse cx="24" cy="18" rx="12" ry="13.92" fill="#F8EEDB" />
-      {/* placa blanca del QR */}
-      <rect x="16.94" y="10.94" width="14.11" height="14.11" rx="1.83" fill="#fff" />
-      {/* QR simplificado: cuadrados gruesos y separados, se lee en chico */}
-      <rect x="18.64" y="12.64" width="4.66" height="4.66" fill="#0A0A0A" />
-      <rect x="24.70" y="12.64" width="4.66" height="4.66" fill="#0A0A0A" />
-      <rect x="18.64" y="18.70" width="4.66" height="4.66" fill="#0A0A0A" />
-      <rect x="24.70" y="18.70" width="2.82" height="2.82" fill="#0A0A0A" />
-      <rect x="27.67" y="21.67" width="1.69" height="1.69" fill="#0A0A0A" />
+      {/* lupa de costado crema: mango a 45° + aro de la lente */}
+      <line x1="29.48" y1="29.96" x2="34.06" y2="34.54" stroke="#F8EEDB" strokeWidth="4.22" strokeLinecap="round" />
+      <circle cx="21.84" cy="22.32" r="12.24" fill="#F8EEDB" />
+      <circle cx="21.84" cy="22.32" r="8.98" fill="#14532D" />
+      {/* placa blanca del QR adentro de la lente */}
+      <rect x="17.04" y="17.52" width="9.6" height="9.6" rx="1.25" fill="#fff" />
+      {/* QR simplificado: cuadrados chicos con aire, no se apelmaza en chico */}
+      <rect x="18.43" y="18.91" width="2.78" height="2.78" fill="#0A0A0A" />
+      <rect x="22.46" y="18.91" width="2.78" height="2.78" fill="#0A0A0A" />
+      <rect x="18.43" y="22.94" width="2.78" height="2.78" fill="#0A0A0A" />
+      <rect x="22.46" y="22.94" width="1.68" height="1.68" fill="#0A0A0A" />
+      <rect x="24.19" y="24.67" width="1.01" height="1.01" fill="#0A0A0A" />
     </svg>
   )
 }
