@@ -3,9 +3,10 @@
  * Corre como parte del build (package.json: "build": "node scripts/gen-icons.mjs
  * && vite build"), así que estos iconos son la salida de ESTE archivo.
  *
- * Marca actual (nov 2026): lupa grande de costado en crema piedra (#D3C9B0)
- * sobre el color de la app (teal #0F766E), con disco blanco y la palabra
- * «QR» en negro adentro de la lente. Los contornos de las letras son los
+ * Marca actual (nov 2026, v10 «el Guasón»): lupa grande de costado en el
+ * verde cerceta de la app (teal #0F766E) sobre contenedor negro (#0A0A0A),
+ * con disco blanco y la palabra «QR» en violeta (#6E4EAA) adentro de la
+ * lente. Los contornos de las letras son los
  * reales de Noto Sans Bold, volcados como polígonos (regla even-odd) —
  * la misma geometría que los paths de Logo.jsx y favicon.svg.
  * Se dibuja con sobremuestreo x4 y se promedia, para bordes suaves.
@@ -22,6 +23,7 @@ const TEAL = [15, 118, 110, 255] // #0F766E — el color de la app
 const PIEDRA = [211, 201, 176, 255] // #D3C9B0 — crema piedra
 const WHITE = [255, 255, 255, 255]
 const BLACK = [10, 10, 10, 255]
+const VIOLET = [110, 78, 170, 255] // #6E4EAA — violeta de las letras «QR»
 
 function crc32(buf) {
   let table = crc32.table
@@ -109,15 +111,15 @@ function inPolys(x, y) {
 /** Color de la marca en el punto (x, y); null = transparente. */
 function colorAt(x, y) {
   let c = null
-  // fondo: el color de la app, redondeado
-  if (inRoundRect(x, y, 0.035, 0.035, 0.965, 0.965, 0.205)) c = TEAL
-  // lupa grande: mango a 45° con extremos redondos + aro de la lente
-  if (nearSegment(x, y, 0.6295, 0.6345, 0.7603, 0.7653, 0.05)) c = PIEDRA
-  if (inCircle(x, y, 0.435, 0.44, 0.31)) c = PIEDRA
+  // fondo: contenedor negro, redondeado
+  if (inRoundRect(x, y, 0.035, 0.035, 0.965, 0.965, 0.205)) c = BLACK
+  // lupa grande: mango a 45° con extremos redondos + aro de la lente, en el verde cerceta de la app
+  if (nearSegment(x, y, 0.6295, 0.6345, 0.7603, 0.7653, 0.05)) c = TEAL
+  if (inCircle(x, y, 0.435, 0.44, 0.31)) c = TEAL
   // disco blanco de la lente
   if (inCircle(x, y, 0.435, 0.44, 0.225)) c = WHITE
-  // la palabra «QR» en negro (solo se evalúa cerca de las letras)
-  if (x > 0.25 && x < 0.62 && y > 0.30 && y < 0.58 && inPolys(x, y)) c = BLACK
+  // la palabra «QR» en violeta (solo se evalúa cerca de las letras)
+  if (x > 0.25 && x < 0.62 && y > 0.30 && y < 0.58 && inPolys(x, y)) c = VIOLET
   return c
 }
 
