@@ -6,7 +6,7 @@ export default function PetFormModal({ open, onClose, onSaved, pet, veterinariaI
   const isEdit = !!pet
   const [nombre, setNombre] = useState(pet?.nombre || '')
   const [especie, setEspecie] = useState(pet?.especie || 'Perro')
-  const [edad, setEdad] = useState(pet?.edad || '')
+  const [fechaNacimiento, setFechaNacimiento] = useState(pet?.fecha_nacimiento || '')
   const [senas, setSenas] = useState(pet?.senas || '')
   const [duenoNombre, setDuenoNombre] = useState(pet?.dueno_nombre || '')
   const [duenoWhatsapp, setDuenoWhatsapp] = useState(pet?.dueno_whatsapp || '')
@@ -44,7 +44,7 @@ export default function PetFormModal({ open, onClose, onSaved, pet, veterinariaI
       const data = {
         nombre: nombre.trim(),
         especie,
-        edad: edad.trim(),
+        fecha_nacimiento: fechaNacimiento || null,
         senas: senas.trim(),
         foto_url,
         dueno_nombre: duenoNombre.trim(),
@@ -111,12 +111,13 @@ export default function PetFormModal({ open, onClose, onSaved, pet, veterinariaI
               </select>
             </div>
             <div>
-              <label className={labelCls}>Edad</label>
+              <label className={labelCls}>Fecha de nacimiento</label>
               <input
+                type="date"
                 className={inputCls}
-                value={edad}
-                onChange={(e) => setEdad(e.target.value)}
-                placeholder="Ej: 2 años"
+                value={fechaNacimiento}
+                onChange={(e) => setFechaNacimiento(e.target.value)}
+                max={new Date().toISOString().slice(0, 10)}
               />
             </div>
           </div>

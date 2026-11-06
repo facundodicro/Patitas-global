@@ -21,6 +21,7 @@ import { useAuth } from '../hooks/useAuth'
 import {
   deleteAtencion,
   deletePet,
+  edadVisible,
   getMyVeterinaria,
   getPet,
   getPetWithVeterinaria,
@@ -177,9 +178,9 @@ export default function PetPublic() {
           <PetPhoto src={pet.foto_url} alt={pet.nombre} className="h-72 w-full object-cover" />
           <div className="p-6">
             <h1 className="text-3xl font-extrabold text-stone-900">{pet.nombre}</h1>
-            {(pet.especie || pet.raza || pet.edad) && (
+            {(pet.especie || pet.raza || edadVisible(pet)) && (
               <p className="mt-1 text-stone-600">
-                {[pet.especie, pet.raza, pet.edad].filter(Boolean).join(' · ')}
+                {[pet.especie, pet.raza, edadVisible(pet)].filter(Boolean).join(' · ')}
               </p>
             )}
             {veterinaria && (
@@ -274,7 +275,7 @@ export default function PetPublic() {
             </span>
             <h1 className="mt-2 text-3xl font-extrabold text-stone-900">{pet.nombre}</h1>
             <p className="mt-1 text-stone-600">
-              {[pet.especie, pet.edad].filter(Boolean).join(' · ')}
+              {[pet.especie, edadVisible(pet)].filter(Boolean).join(' · ')}
             </p>
             {pet.senas && <p className="mt-2 text-sm text-stone-600">{pet.senas}</p>}
             <div className="mt-4 flex flex-wrap gap-2">

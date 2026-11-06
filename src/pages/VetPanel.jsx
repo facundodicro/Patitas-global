@@ -28,6 +28,7 @@ import { waLink } from '../lib/qr'
 import {
   createVeterinaria,
   DEMO_MODE,
+  edadVisible,
   getMyVeterinaria,
   listAtenciones,
   listMyPets,
@@ -661,7 +662,7 @@ function Dashboard({ veterinaria, onProfileUpdated }) {
                       {p.nombre}
                     </h3>
                     <p className="truncate text-sm text-stone-500">
-                      {[p.especie, p.edad].filter(Boolean).join(' · ')}
+                      {[p.especie, edadVisible(p)].filter(Boolean).join(' · ')}
                     </p>
                     {p.dueno_nombre && (
                       <p className="truncate text-sm font-bold text-stone-600">

@@ -5,7 +5,7 @@ const SECCIONES = [
   },
   {
     h: '2. Qué datos recopilamos',
-    p: 'De la veterinaria (cuenta): email, nombre, WhatsApp y datos del negocio. De las mascotas: nombre, especie, edad, señas particulares y foto. De los dueños que se registran por su cuenta: nombre y número de WhatsApp, con su consentimiento expreso para mostrar ese número en la ficha pública de su mascota. Cuando la mascota es paciente de una veterinaria, esos datos los carga la veterinaria al registrarla. La contraseña de tu cuenta se guarda cifrada, nunca en texto plano.',
+    p: 'De la veterinaria (cuenta): email, nombre, WhatsApp y datos del negocio. De las mascotas: nombre, especie, raza, fecha de nacimiento, señas particulares y foto. De los dueños que se registran por su cuenta: nombre y número de WhatsApp, con su consentimiento expreso para mostrar ese número en la ficha pública de su mascota. Cuando la mascota es paciente de una veterinaria, esos datos los carga la veterinaria al registrarla. La contraseña de tu cuenta se guarda cifrada, nunca en texto plano.',
   },
   {
     h: '3. Para qué usamos tus datos',
