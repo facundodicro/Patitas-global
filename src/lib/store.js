@@ -251,25 +251,61 @@ export async function getPetWithVeterinaria(id) {
   return { pet, veterinaria }
 }
 
+/**
+ * Edad para mostrar: si la mascota tiene fecha de nacimiento, se calcula
+ * al día (nunca queda vieja); si no, se usa la edad escrita a mano
+ * (mascotas cargadas antes del cambio o del modo demo).
+ */
+export function edadVisible(pet) {
+  if (!pet) return null
+  if (pet.fecha_nacimiento) {
+    const n = new Date(`${pet.fecha_nacimiento}T12:00:00`)
+    if (!Number.isNaN(n.getTime())) {
+      const hoy = new Date()
+      let meses =
+        (hoy.getFullYear() - n.getFullYear()) * 12 + (hoy.getMonth() - n.getMonth())
+      if (hoy.getDate() < n.getDate()) meses -= 1
+      if (meses < 0) return pet.edad || null
+      if (meses === 0) {
+        const dias = Math.floor((hoy - n) / 86400000)
+        if (dias <= 0) return 'Recién nacido'
+        return dias === 1 ? '1 día' : `${dias} días`
+      }
+      if (meses < 12) return meses === 1 ? '1 mes' : `${meses} meses`
+      const anios = Math.floor(meses / 12)
+      const resto = meses % 12
+      if (anios >= 2 || resto === 0) return anios === 1 ? '1 año' : `${anios} años`
+      return `1 año y ${resto} ${resto === 1 ? 'mes' : 'meses'}`
+    }
+  }
+  return pet.edad || null
+}
+
 /** Mascota pública (sin datos del dueño) para el QR. */
 export async function getPublicPet(id) {
   if (!DEMO_MODE) {
     const { data } = await supabase.from('pets_public').select('*').eq('id', id).maybeSingle()
     if (data) {
-      // La vista pets_public es anterior a la columna raza (2026-10-28):
-      // si la fila no la trae, se intenta completar desde la tabla base
-      // pidiendo SOLO la raza (dato de la mascota, jamás del dueño).
-      // Si la lectura no está permitida, la ficha sigue sin raza.
-      if (data.raza === undefined) {
+      // La vista pets_public es anterior a las columnas raza (2026-10-28)
+      // y fecha_nacimiento (2026-11-06): si la fila no las trae, se
+      // intentan completar desde la tabla base pidiendo SOLO esos datos
+      // de la mascota, jamás datos del dueño. Si la lectura no está
+      // permitida, la ficha sigue sin esos datos.
+      if (data.raza === undefined || data.fecha_nacimiento === undefined) {
         try {
           const { data: extra } = await supabase
             .from('pets')
-            .select('raza')
+            .select('raza, fecha_nacimiento')
             .eq('id', id)
             .maybeSingle()
-          if (extra) return { ...data, raza: extra.raza ?? null }
+          if (extra)
+            return {
+              ...data,
+              raza: data.raza ?? extra.raza ?? null,
+              fecha_nacimiento: data.fecha_nacimiento ?? extra.fecha_nacimiento ?? null,
+            }
         } catch {
-          /* la ficha funciona igual sin la raza */
+          /* la ficha funciona igual sin la raza ni la fecha */
         }
       }
       return data
@@ -279,7 +315,7 @@ export async function getPublicPet(id) {
     // SOLO columnas seguras: jamás datos del dueño.
     const { data: base, error } = await supabase
       .from('pets')
-      .select('id, nombre, especie, raza, edad, senas, foto_url, veterinaria_id, created_at')
+      .select('id, nombre, especie, raza, edad, fecha_nacimiento, senas, foto_url, veterinaria_id, created_at')
       .eq('id', id)
       .maybeSingle()
     if (error) throw error
@@ -428,7 +464,7 @@ export async function createOwnerPet(
 /** Registra un paciente de la veterinaria. */
 export async function createPet(
   veterinariaId,
-  { nombre, especie, edad, senas, foto_url, dueno_nombre, dueno_whatsapp },
+  { nombre, especie, edad, fecha_nacimiento, senas, foto_url, dueno_nombre, dueno_whatsapp },
 ) {
   if (!DEMO_MODE) {
     const { data: row, error } = await supabase
@@ -437,7 +473,8 @@ export async function createPet(
         veterinaria_id: veterinariaId,
         nombre,
         especie,
-        edad,
+        edad: edad || null,
+        fecha_nacimiento: fecha_nacimiento || null,
         senas,
         foto_url,
         dueno_nombre,
@@ -454,6 +491,7 @@ export async function createPet(
     nombre,
     especie,
     edad: edad || null,
+    fecha_nacimiento: fecha_nacimiento || null,
     senas: senas || null,
     foto_url: foto_url || null,
     dueno_nombre: dueno_nombre || null,
