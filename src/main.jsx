@@ -4,6 +4,7 @@ import { BrowserRouter } from 'react-router-dom'
 import './index.css'
 import App from './App.jsx'
 import { AuthProvider } from './hooks/useAuth.jsx'
+import { Analytics } from '@vercel/analytics/react'
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
@@ -11,6 +12,7 @@ createRoot(document.getElementById('root')).render(
       <AuthProvider>
         <App />
       </AuthProvider>
+      <Analytics />
     </BrowserRouter>
   </StrictMode>,
 )
