@@ -62,7 +62,7 @@ export default function Home() {
       <section className="bg-gradient-to-br from-brand-dark via-brand to-brand-light text-white">
         <div className="mx-auto grid max-w-6xl items-center gap-10 px-4 pb-16 pt-10 md:grid-cols-2">
           <div>
-            <span className="inline-block rounded-full bg-white/15 px-4 py-1 text-sm font-bold">
+            <span className="inline-block rounded-full bg-white/15 px-4 py-1 text-base font-bold">
               Para veterinarias
             </span>
             <h1 className="mt-5 text-4xl font-extrabold leading-tight md:text-5xl">
@@ -98,10 +98,10 @@ export default function Home() {
                 <div>
                   <PawMark className="h-10 w-10 text-brand" />
                   <p className="mt-2 text-2xl font-extrabold">Coco</p>
-                  <p className="text-sm text-stone-500">Paciente de Veterinaria Huellas</p>
+                  <p className="text-base text-stone-500">Paciente de Veterinaria Huellas</p>
                 </div>
               </div>
-              <div className="mt-4 flex items-center gap-2 rounded-full bg-brand-soft px-4 py-2 text-sm font-bold text-brand-dark">
+              <div className="mt-4 flex items-center gap-2 rounded-full bg-brand-soft px-4 py-2 text-base font-bold text-brand-dark">
                 <HeartPulse className="h-4 w-4" />
                 3 vacunas · 2 visitas registradas
               </div>
@@ -169,7 +169,7 @@ export default function Home() {
         <div className="mx-auto max-w-6xl px-4 py-14">
           <div className="grid items-center gap-10 md:grid-cols-2">
             <div>
-              <span className="inline-block rounded-full bg-brand-soft px-4 py-1 text-sm font-bold text-brand-dark">
+              <span className="inline-block rounded-full bg-brand-soft px-4 py-1 text-base font-bold text-brand-dark">
                 ¿Sos dueño?
               </span>
               <h2 className="mt-4 text-3xl font-extrabold text-stone-900">
@@ -185,7 +185,7 @@ export default function Home() {
                   </span>
                   <div>
                     <p className="font-extrabold text-stone-900">Carnet digital de vacunas</p>
-                    <p className="text-sm text-stone-600">
+                    <p className="text-base text-stone-600">
                       El carnet sanitario en tu celu: vacunas aplicadas y próximas dosis.
                     </p>
                   </div>
@@ -196,7 +196,7 @@ export default function Home() {
                   </span>
                   <div>
                     <p className="font-extrabold text-stone-900">Recordatorios por WhatsApp</p>
-                    <p className="text-sm text-stone-600">
+                    <p className="text-base text-stone-600">
                       Te avisamos cuando toca la próxima vacuna o tratamiento.
                     </p>
                   </div>
@@ -207,7 +207,7 @@ export default function Home() {
                   </span>
                   <div>
                     <p className="font-extrabold text-stone-900">QR que la trae de vuelta</p>
-                    <p className="text-sm text-stone-600">
+                    <p className="text-base text-stone-600">
                       Si se pierde, quien escanee su QR contacta a tu veterinaria al instante.
                     </p>
                   </div>
@@ -217,7 +217,7 @@ export default function Home() {
                 <p className="font-extrabold text-stone-900">
                   ¿Tu veterinaria no usa Patitas todavía?
                 </p>
-                <p className="mt-1 text-sm text-stone-600">
+                <p className="mt-1 text-base text-stone-600">
                   Registrá a tu mascota vos mismo, gratis: creás su ficha y descargás
                   su QR para el collar. Si se pierde, te avisan a vos por WhatsApp.
                 </p>
@@ -231,11 +231,11 @@ export default function Home() {
             </div>
             <div className="mx-auto w-full max-w-sm -rotate-2" aria-hidden="true">
               <div className="rounded-3xl bg-white p-6 text-stone-900 shadow-pop ring-1 ring-stone-200">
-                <p className="text-xs font-extrabold uppercase tracking-widest text-stone-400">
+                <p className="text-sm font-extrabold uppercase tracking-widest text-stone-400">
                   Carnet digital
                 </p>
                 <p className="mt-2 text-2xl font-extrabold">Coco</p>
-                <div className="mt-4 space-y-2 text-sm">
+                <div className="mt-4 space-y-2 text-base">
                   <div className="flex items-center justify-between rounded-xl bg-emerald-50 px-3 py-2">
                     <span className="font-bold text-emerald-800">Antirrábica</span>
                     <span className="text-emerald-600">Aplicada</span>
