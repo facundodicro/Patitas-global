@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react'
 import { X, Camera, Loader2 } from 'lucide-react'
 import { createPet, updatePet, uploadPetPhoto } from '../lib/store'
+import { isValidPhone, PHONE_ERROR } from '../lib/phone'
 
 export default function PetFormModal({ open, onClose, onSaved, pet, veterinariaId }) {
   const isEdit = !!pet
@@ -14,6 +15,7 @@ export default function PetFormModal({ open, onClose, onSaved, pet, veterinariaI
   const [preview, setPreview] = useState(pet?.foto_url || null)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
+  const [whatsappError, setWhatsappError] = useState('')
   const fileRef = useRef(null)
 
   if (!open) return null
@@ -35,6 +37,11 @@ export default function PetFormModal({ open, onClose, onSaved, pet, veterinariaI
     }
     if (!duenoNombre.trim()) {
       setError('Poné el nombre del dueño.')
+      return
+    }
+    // El WhatsApp es opcional en este formulario: se valida solo si vino cargado.
+    if (duenoWhatsapp.trim() && !isValidPhone(duenoWhatsapp)) {
+      setWhatsappError(PHONE_ERROR)
       return
     }
     setSubmitting(true)
@@ -175,11 +182,34 @@ export default function PetFormModal({ open, onClose, onSaved, pet, veterinariaI
             <div>
               <label className={labelCls}>WhatsApp del dueño</label>
               <input
-                className={inputCls}
+                className={
+                  whatsappError
+                    ? inputCls.replace('border-stone-200', 'border-red-400')
+                    : inputCls
+                }
+                type="tel"
+                inputMode="tel"
+                autoComplete="tel"
                 value={duenoWhatsapp}
-                onChange={(e) => setDuenoWhatsapp(e.target.value)}
+                onChange={(e) => {
+                  setDuenoWhatsapp(e.target.value)
+                  if (!e.target.value.trim() || isValidPhone(e.target.value))
+                    setWhatsappError('')
+                }}
+                onBlur={() => {
+                  if (duenoWhatsapp.trim() && !isValidPhone(duenoWhatsapp))
+                    setWhatsappError(PHONE_ERROR)
+                }}
                 placeholder="Ej: 5492262000000"
               />
+              <p className="mt-1.5 text-xs text-stone-500">
+                Con código de país y área, sin espacios ni guiones.
+              </p>
+              {whatsappError && (
+                <p className="mt-1.5 text-xs font-semibold text-red-600">
+                  {whatsappError}
+                </p>
+              )}
             </div>
           </div>
 

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { X, AlertTriangle, CheckCircle2, Camera, Loader2, MapPin, Navigation } from 'lucide-react'
 import { createReport, updateReport, uploadPetPhoto, DEMO_MODE } from '../lib/store'
+import { isValidPhone, PHONE_ERROR } from '../lib/phone'
 import { useAuth } from '../hooks/useAuth'
 
 export default function ReportModal({ open, onClose, onCreated, editing = null, onSaved }) {
@@ -21,6 +22,7 @@ export default function ReportModal({ open, onClose, onCreated, editing = null, 
   const [locError, setLocError] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
+  const [telefonoError, setTelefonoError] = useState('')
   const fileRef = useRef(null)
 
   // Al abrir en modo edición, precargar los datos de la publicación
@@ -44,6 +46,7 @@ export default function ReportModal({ open, onClose, onCreated, editing = null, 
       )
       setLocError('')
       setError('')
+      setTelefonoError('')
       setSubmitting(false)
     }
   }, [open, editing])
@@ -64,7 +67,7 @@ export default function ReportModal({ open, onClose, onCreated, editing = null, 
     setTipo('perdida')
     setNombre(''); setEspecie('Perro'); setRaza(''); setSenas('')
     setRecompensa(''); setZona(''); setFecha(''); setTelefono('')
-    setFile(null); setPreview(null); setError(''); setSubmitting(false)
+    setFile(null); setPreview(null); setError(''); setTelefonoError(''); setSubmitting(false)
     setCoords(null); setLocError('')
   }
 
@@ -95,8 +98,17 @@ export default function ReportModal({ open, onClose, onCreated, editing = null, 
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError('')
-    if (!nombre.trim() || !zona.trim() || !fecha || !telefono.trim()) {
-      setError('Completá todos los campos obligatorios.')
+    const faltan = []
+    if (!nombre.trim()) faltan.push('nombre')
+    if (!zona.trim()) faltan.push('zona')
+    if (!fecha) faltan.push('fecha')
+    if (!telefono.trim()) faltan.push('teléfono')
+    if (faltan.length > 0) {
+      setError(`Faltan: ${faltan.join(', ')}.`)
+      return
+    }
+    if (!isValidPhone(telefono)) {
+      setTelefonoError(PHONE_ERROR)
       return
     }
     setSubmitting(true)
@@ -202,7 +214,6 @@ export default function ReportModal({ open, onClose, onCreated, editing = null, 
               value={nombre}
               onChange={(e) => setNombre(e.target.value)}
               placeholder="Ej: Firulais"
-              required
             />
           </div>
 
@@ -244,6 +255,7 @@ export default function ReportModal({ open, onClose, onCreated, editing = null, 
                 value={recompensa}
                 onChange={(e) => setRecompensa(e.target.value)}
                 placeholder="Ej: $20.000"
+                inputMode="decimal"
               />
             </div>
           )}
@@ -256,7 +268,6 @@ export default function ReportModal({ open, onClose, onCreated, editing = null, 
                 value={zona}
                 onChange={(e) => setZona(e.target.value)}
                 placeholder="Ej: Palermo, Buenos Aires"
-                required
               />
             </div>
             <div>
@@ -267,7 +278,6 @@ export default function ReportModal({ open, onClose, onCreated, editing = null, 
                 value={fecha}
                 max={hoy}
                 onChange={(e) => setFecha(e.target.value)}
-                required
               />
             </div>
           </div>
@@ -275,13 +285,30 @@ export default function ReportModal({ open, onClose, onCreated, editing = null, 
           <div>
             <label className={labelCls}>Teléfono *</label>
             <input
-              className={inputCls}
+              className={
+                telefonoError
+                  ? inputCls.replace('border-stone-200', 'border-red-400')
+                  : inputCls
+              }
+              type="tel"
+              autoComplete="tel"
               value={telefono}
-              onChange={(e) => setTelefono(e.target.value)}
+              onChange={(e) => {
+                setTelefono(e.target.value)
+                if (isValidPhone(e.target.value)) setTelefonoError('')
+              }}
+              onBlur={() => {
+                if (telefono.trim() && !isValidPhone(telefono))
+                  setTelefonoError(PHONE_ERROR)
+              }}
               placeholder="Ej: 5492262000000"
               inputMode="tel"
-              required
             />
+            {telefonoError && (
+              <p className="mt-1.5 text-xs font-semibold text-red-600">
+                {telefonoError}
+              </p>
+            )}
           </div>
 
           <div>

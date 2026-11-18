@@ -25,6 +25,7 @@ import QrPlateModal from '../components/QrPlateModal'
 import AtencionFormModal from '../components/AtencionFormModal'
 import { useAuth } from '../hooks/useAuth'
 import { waLink } from '../lib/qr'
+import { isValidPhone, PHONE_ERROR } from '../lib/phone'
 import {
   createVeterinaria,
   DEMO_MODE,
@@ -47,7 +48,9 @@ function Spinner() {
 
 const inputCls =
   'w-full rounded-xl border border-stone-300 px-4 py-2.5 outline-none transition focus:border-brand focus:ring-2 focus:ring-brand-soft'
+const inputErrCls = inputCls.replace('border-stone-300', 'border-red-400')
 const labelCls = 'mb-1 block text-sm font-bold text-stone-700'
+const fieldErrCls = 'mt-1.5 text-xs font-semibold text-red-600'
 
 const TIPOS = [
   { value: 'vacuna', label: 'Vacuna', cls: 'bg-emerald-100 text-emerald-800' },
@@ -118,6 +121,7 @@ function VetLogin() {
               id="vet-email"
               type="email"
               required
+              autoComplete="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className={inputCls}
@@ -132,6 +136,7 @@ function VetLogin() {
               id="vet-password"
               type="password"
               required
+              autoComplete="current-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className={inputCls}
@@ -169,6 +174,7 @@ function VetRegister({ onSaved }) {
   const [preview, setPreview] = useState(null)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
+  const [errors, setErrors] = useState({})
   const fileRef = useRef(null)
 
   function handleFile(f) {
@@ -179,13 +185,26 @@ function VetRegister({ onSaved }) {
     reader.readAsDataURL(f)
   }
 
+  function validateWhatsapp(value) {
+    if (!value.trim()) return 'Poné el WhatsApp de la veterinaria.'
+    if (!isValidPhone(value)) return PHONE_ERROR
+    return ''
+  }
+
+  function handleWhatsappBlur() {
+    const msg = validateWhatsapp(whatsapp)
+    setErrors((prev) => ({ ...prev, whatsapp: msg || undefined }))
+  }
+
   async function handleSubmit(e) {
     e.preventDefault()
     setError('')
-    if (!nombre.trim() || !whatsapp.trim()) {
-      setError('Completá el nombre y el WhatsApp de la veterinaria.')
-      return
-    }
+    const next = {}
+    if (!nombre.trim()) next.nombre = 'Poné el nombre de la veterinaria.'
+    const waMsg = validateWhatsapp(whatsapp)
+    if (waMsg) next.whatsapp = waMsg
+    setErrors(next)
+    if (Object.keys(next).length > 0) return
     setSubmitting(true)
     try {
       const logo_url = file ? await uploadPetPhoto(file) : null
@@ -219,22 +238,37 @@ function VetRegister({ onSaved }) {
           <div>
             <label className={labelCls}>Nombre *</label>
             <input
-              className={inputCls}
+              className={errors.nombre ? inputErrCls : inputCls}
               value={nombre}
-              onChange={(e) => setNombre(e.target.value)}
+              onChange={(e) => {
+                setNombre(e.target.value)
+                if (e.target.value.trim())
+                  setErrors((prev) => ({ ...prev, nombre: undefined }))
+              }}
               placeholder="Ej: Veterinaria Huellas"
-              required
             />
+            {errors.nombre && <p className={fieldErrCls}>{errors.nombre}</p>}
           </div>
           <div>
             <label className={labelCls}>WhatsApp *</label>
             <input
-              className={inputCls}
+              className={errors.whatsapp ? inputErrCls : inputCls}
+              type="tel"
+              inputMode="tel"
+              autoComplete="tel"
               value={whatsapp}
-              onChange={(e) => setWhatsapp(e.target.value)}
+              onChange={(e) => {
+                setWhatsapp(e.target.value)
+                if (isValidPhone(e.target.value))
+                  setErrors((prev) => ({ ...prev, whatsapp: undefined }))
+              }}
+              onBlur={handleWhatsappBlur}
               placeholder="Ej: 5492262000000"
-              required
             />
+            <p className="mt-1.5 text-xs text-stone-500">
+              Con código de país y área, sin espacios ni guiones.
+            </p>
+            {errors.whatsapp && <p className={fieldErrCls}>{errors.whatsapp}</p>}
           </div>
           <div>
             <label className={labelCls}>Dirección</label>
@@ -295,6 +329,7 @@ function VetProfileModal({ onClose, onSaved, veterinaria }) {
   const [preview, setPreview] = useState(veterinaria.logo_url || null)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
+  const [errors, setErrors] = useState({})
   const fileRef = useRef(null)
 
   function handleFile(f) {
@@ -305,13 +340,26 @@ function VetProfileModal({ onClose, onSaved, veterinaria }) {
     reader.readAsDataURL(f)
   }
 
+  function validateWhatsapp(value) {
+    if (!value.trim()) return 'Poné el WhatsApp de la veterinaria.'
+    if (!isValidPhone(value)) return PHONE_ERROR
+    return ''
+  }
+
+  function handleWhatsappBlur() {
+    const msg = validateWhatsapp(whatsapp)
+    setErrors((prev) => ({ ...prev, whatsapp: msg || undefined }))
+  }
+
   async function handleSubmit(e) {
     e.preventDefault()
     setError('')
-    if (!nombre.trim() || !whatsapp.trim()) {
-      setError('Completá el nombre y el WhatsApp de la veterinaria.')
-      return
-    }
+    const next = {}
+    if (!nombre.trim()) next.nombre = 'Poné el nombre de la veterinaria.'
+    const waMsg = validateWhatsapp(whatsapp)
+    if (waMsg) next.whatsapp = waMsg
+    setErrors(next)
+    if (Object.keys(next).length > 0) return
     setSubmitting(true)
     try {
       const logo_url = file ? await uploadPetPhoto(file) : veterinaria.logo_url
@@ -357,22 +405,37 @@ function VetProfileModal({ onClose, onSaved, veterinaria }) {
           <div>
             <label className={labelCls}>Nombre *</label>
             <input
-              className={inputCls}
+              className={errors.nombre ? inputErrCls : inputCls}
               value={nombre}
-              onChange={(e) => setNombre(e.target.value)}
+              onChange={(e) => {
+                setNombre(e.target.value)
+                if (e.target.value.trim())
+                  setErrors((prev) => ({ ...prev, nombre: undefined }))
+              }}
               placeholder="Ej: Veterinaria Huellas"
-              required
             />
+            {errors.nombre && <p className={fieldErrCls}>{errors.nombre}</p>}
           </div>
           <div>
             <label className={labelCls}>WhatsApp *</label>
             <input
-              className={inputCls}
+              className={errors.whatsapp ? inputErrCls : inputCls}
+              type="tel"
+              inputMode="tel"
+              autoComplete="tel"
               value={whatsapp}
-              onChange={(e) => setWhatsapp(e.target.value)}
+              onChange={(e) => {
+                setWhatsapp(e.target.value)
+                if (isValidPhone(e.target.value))
+                  setErrors((prev) => ({ ...prev, whatsapp: undefined }))
+              }}
+              onBlur={handleWhatsappBlur}
               placeholder="Ej: 5492262000000"
-              required
             />
+            <p className="mt-1.5 text-xs text-stone-500">
+              Con código de país y área, sin espacios ni guiones.
+            </p>
+            {errors.whatsapp && <p className={fieldErrCls}>{errors.whatsapp}</p>}
           </div>
           <div>
             <label className={labelCls}>Dirección</label>
@@ -617,6 +680,7 @@ function Dashboard({ veterinaria, onProfileUpdated }) {
       <div className="relative mt-6 max-w-md">
         <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-stone-400" />
         <input
+          type="search"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Buscar por mascota, especie o dueño…"

@@ -1,10 +1,13 @@
 import { useEffect, useRef, useState } from 'react'
 import { Camera, Loader2, X } from 'lucide-react'
 import { updatePet, uploadPetPhoto } from '../lib/store'
+import { isValidPhone, PHONE_ERROR } from '../lib/phone'
 
 const inputCls =
   'w-full rounded-xl border border-stone-200 bg-white px-4 py-2.5 text-sm text-stone-900 placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-brand/40 focus:border-brand transition'
+const inputErrCls = inputCls.replace('border-stone-200', 'border-red-400')
 const labelCls = 'block text-sm font-bold text-stone-700 mb-1.5'
+const fieldErrCls = 'mt-1.5 text-xs font-semibold text-red-600'
 
 const ESPECIES = ['Perro', 'Gato', 'Ave', 'Conejo', 'Otro']
 
@@ -25,6 +28,7 @@ export default function OwnerPetFormModal({ open, onClose, onSaved, pet }) {
   const [preview, setPreview] = useState(null)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
+  const [errors, setErrors] = useState({})
   const fileRef = useRef(null)
 
   useEffect(() => {
@@ -39,6 +43,7 @@ export default function OwnerPetFormModal({ open, onClose, onSaved, pet }) {
       setFile(null)
       setPreview(pet.foto_url || null)
       setError('')
+      setErrors({})
     }
   }, [open, pet])
 
@@ -52,13 +57,27 @@ export default function OwnerPetFormModal({ open, onClose, onSaved, pet }) {
     reader.readAsDataURL(f)
   }
 
+  function validateWhatsapp(value) {
+    if (!value.trim()) return 'Poné tu WhatsApp.'
+    if (!isValidPhone(value)) return PHONE_ERROR
+    return ''
+  }
+
+  function handleWhatsappBlur() {
+    const msg = validateWhatsapp(duenoWhatsapp)
+    setErrors((prev) => ({ ...prev, whatsapp: msg || undefined }))
+  }
+
   async function handleSubmit(e) {
     e.preventDefault()
     setError('')
-    if (!nombre.trim() || !duenoNombre.trim() || !duenoWhatsapp.trim()) {
-      setError('Completá el nombre de la mascota, tu nombre y tu WhatsApp.')
-      return
-    }
+    const next = {}
+    if (!nombre.trim()) next.nombre = 'Poné el nombre de tu mascota.'
+    if (!duenoNombre.trim()) next.duenoNombre = 'Poné tu nombre.'
+    const waMsg = validateWhatsapp(duenoWhatsapp)
+    if (waMsg) next.whatsapp = waMsg
+    setErrors(next)
+    if (Object.keys(next).length > 0) return
     setSubmitting(true)
     try {
       const foto_url = file ? await uploadPetPhoto(file) : pet.foto_url
@@ -133,11 +152,15 @@ export default function OwnerPetFormModal({ open, onClose, onSaved, pet }) {
             <div>
               <label className={labelCls}>Nombre *</label>
               <input
-                className={inputCls}
+                className={errors.nombre ? inputErrCls : inputCls}
                 value={nombre}
-                onChange={(e) => setNombre(e.target.value)}
-                required
+                onChange={(e) => {
+                  setNombre(e.target.value)
+                  if (e.target.value.trim())
+                    setErrors((prev) => ({ ...prev, nombre: undefined }))
+                }}
               />
+              {errors.nombre && <p className={fieldErrCls}>{errors.nombre}</p>}
             </div>
             <div>
               <label className={labelCls}>Especie *</label>
@@ -179,21 +202,39 @@ export default function OwnerPetFormModal({ open, onClose, onSaved, pet }) {
             <div>
               <label className={labelCls}>Tu nombre *</label>
               <input
-                className={inputCls}
+                className={errors.duenoNombre ? inputErrCls : inputCls}
                 value={duenoNombre}
-                onChange={(e) => setDuenoNombre(e.target.value)}
-                required
+                onChange={(e) => {
+                  setDuenoNombre(e.target.value)
+                  if (e.target.value.trim())
+                    setErrors((prev) => ({ ...prev, duenoNombre: undefined }))
+                }}
+                autoComplete="name"
               />
+              {errors.duenoNombre && (
+                <p className={fieldErrCls}>{errors.duenoNombre}</p>
+              )}
             </div>
             <div>
               <label className={labelCls}>Tu WhatsApp *</label>
               <input
-                className={inputCls}
+                className={errors.whatsapp ? inputErrCls : inputCls}
+                type="tel"
+                inputMode="tel"
+                autoComplete="tel"
                 value={duenoWhatsapp}
-                onChange={(e) => setDuenoWhatsapp(e.target.value)}
+                onChange={(e) => {
+                  setDuenoWhatsapp(e.target.value)
+                  if (isValidPhone(e.target.value))
+                    setErrors((prev) => ({ ...prev, whatsapp: undefined }))
+                }}
+                onBlur={handleWhatsappBlur}
                 placeholder="Ej: 5492262000000"
-                required
               />
+              <p className="mt-1.5 text-xs text-stone-500">
+                Con código de país y área, sin espacios ni guiones.
+              </p>
+              {errors.whatsapp && <p className={fieldErrCls}>{errors.whatsapp}</p>}
             </div>
           </div>
 

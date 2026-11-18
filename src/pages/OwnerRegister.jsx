@@ -17,9 +17,12 @@ import Logo from '../components/Logo'
 import { useAuth } from '../hooks/useAuth'
 import { createOwnerPet, getMyVeterinaria, uploadPetPhoto } from '../lib/store'
 import { qrDataURL } from '../lib/qr'
+import { isValidPhone, PHONE_ERROR } from '../lib/phone'
 
 const inputCls =
   'w-full rounded-xl border border-stone-300 px-4 py-2.5 outline-none transition focus:border-brand focus:ring-2 focus:ring-brand-soft'
+const inputErrCls = inputCls.replace('border-stone-300', 'border-red-400')
+const fieldErrCls = 'mt-1.5 text-xs font-semibold text-red-600'
 const labelCls = 'mb-1 block text-sm font-bold text-stone-700'
 
 const ESPECIES = ['Perro', 'Gato', 'Ave', 'Conejo', 'Otro']
@@ -213,6 +216,7 @@ function RegisterForm() {
   const [preview, setPreview] = useState(null)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
+  const [errors, setErrors] = useState({})
   const [created, setCreated] = useState(null)
   const fileRef = useRef(null)
 
@@ -224,19 +228,31 @@ function RegisterForm() {
     reader.readAsDataURL(f)
   }
 
+  function validateWhatsapp(value) {
+    if (!value.trim()) return 'Poné tu WhatsApp.'
+    if (!isValidPhone(value)) return PHONE_ERROR
+    return ''
+  }
+
+  function handleWhatsappBlur() {
+    const msg = validateWhatsapp(duenoWhatsapp)
+    setErrors((prev) => ({ ...prev, whatsapp: msg || undefined }))
+  }
+
   async function handleSubmit(e) {
     e.preventDefault()
     setError('')
-    if (!nombre.trim() || !duenoNombre.trim() || !duenoWhatsapp.trim()) {
-      setError('Completá el nombre de tu mascota, tu nombre y tu WhatsApp.')
-      return
-    }
+    const next = {}
+    if (!nombre.trim()) next.nombre = 'Poné el nombre de tu mascota.'
+    if (!duenoNombre.trim()) next.duenoNombre = 'Poné tu nombre.'
+    const waMsg = validateWhatsapp(duenoWhatsapp)
+    if (waMsg) next.whatsapp = waMsg
     if (!consentimiento) {
-      setError(
-        'Para crear la ficha necesitamos tu OK: es lo que permite que quien encuentre a tu mascota te avise.',
-      )
-      return
+      next.consentimiento =
+        'Para crear la ficha necesitamos tu OK: es lo que permite que quien encuentre a tu mascota te avise.'
     }
+    setErrors(next)
+    if (Object.keys(next).length > 0) return
     setSubmitting(true)
     try {
       const foto_url = file ? await uploadPetPhoto(file) : null
@@ -283,6 +299,7 @@ function RegisterForm() {
           if (fileRef.current) fileRef.current.value = ''
           setConsentimiento(false)
           setError('')
+          setErrors({})
         }}
       />
     )
@@ -310,12 +327,16 @@ function RegisterForm() {
               <div>
                 <label className={labelCls}>Nombre *</label>
                 <input
-                  className={inputCls}
+                  className={errors.nombre ? inputErrCls : inputCls}
                   value={nombre}
-                  onChange={(e) => setNombre(e.target.value)}
+                  onChange={(e) => {
+                    setNombre(e.target.value)
+                    if (e.target.value.trim())
+                      setErrors((prev) => ({ ...prev, nombre: undefined }))
+                  }}
                   placeholder="Ej: Blanca"
-                  required
                 />
+                {errors.nombre && <p className={fieldErrCls}>{errors.nombre}</p>}
               </div>
               <div>
                 <label className={labelCls}>Especie *</label>
@@ -384,44 +405,68 @@ function RegisterForm() {
             <div>
               <label className={labelCls}>Tu nombre *</label>
               <input
-                className={inputCls}
+                className={errors.duenoNombre ? inputErrCls : inputCls}
                 value={duenoNombre}
-                onChange={(e) => setDuenoNombre(e.target.value)}
+                onChange={(e) => {
+                  setDuenoNombre(e.target.value)
+                  if (e.target.value.trim())
+                    setErrors((prev) => ({ ...prev, duenoNombre: undefined }))
+                }}
                 placeholder="Ej: María González"
-                required
+                autoComplete="name"
               />
+              {errors.duenoNombre && (
+                <p className={fieldErrCls}>{errors.duenoNombre}</p>
+              )}
             </div>
             <div>
               <label className={labelCls}>Tu WhatsApp *</label>
               <input
-                className={inputCls}
+                className={errors.whatsapp ? inputErrCls : inputCls}
+                type="tel"
+                inputMode="tel"
+                autoComplete="tel"
                 value={duenoWhatsapp}
-                onChange={(e) => setDuenoWhatsapp(e.target.value)}
+                onChange={(e) => {
+                  setDuenoWhatsapp(e.target.value)
+                  if (isValidPhone(e.target.value))
+                    setErrors((prev) => ({ ...prev, whatsapp: undefined }))
+                }}
+                onBlur={handleWhatsappBlur}
                 placeholder="Ej: 5492262000000"
-                required
               />
               <p className="mt-1.5 text-xs text-stone-500">
                 Con código de país y área, sin espacios ni guiones. Es el número al que
                 te van a avisar si encuentran a tu mascota.
               </p>
+              {errors.whatsapp && <p className={fieldErrCls}>{errors.whatsapp}</p>}
             </div>
           </fieldset>
 
-          <label className="flex items-start gap-3 rounded-xl bg-brand-faint px-4 py-3 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={consentimiento}
-              onChange={(e) => setConsentimiento(e.target.checked)}
-              className="mt-0.5 h-5 w-5 shrink-0 accent-[#0F766E]"
-            />
-            <span className="text-sm text-stone-700">
-              <strong>Acepto que mi nombre y mi WhatsApp se muestren en la ficha
-              pública de mi mascota</strong>, para que la persona que la encuentre
-              pueda contactarme. Sin este permiso no podemos crear la ficha: es el
-              dato que hace que el QR sirva para recuperarla. Podés cambiarlo o
-              quitarlo cuando quieras desde «Mis mascotas».
-            </span>
-          </label>
+          <div>
+            <label className="flex items-start gap-3 rounded-xl bg-brand-faint px-4 py-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={consentimiento}
+                onChange={(e) => {
+                  setConsentimiento(e.target.checked)
+                  if (e.target.checked)
+                    setErrors((prev) => ({ ...prev, consentimiento: undefined }))
+                }}
+                className="mt-0.5 h-5 w-5 shrink-0 accent-[#0F766E]"
+              />
+              <span className="text-sm text-stone-700">
+                <strong>Acepto que mi nombre y mi WhatsApp se muestren en la ficha
+                pública de mi mascota</strong>, para que la persona que la encuentre
+                pueda contactarme. Sin este permiso no podemos crear la ficha: es el
+                dato que hace que el QR sirva para recuperarla. Podés cambiarlo o
+                quitarlo cuando quieras desde «Mis mascotas».
+              </span>
+            </label>
+            {errors.consentimiento && (
+              <p className={fieldErrCls}>{errors.consentimiento}</p>
+            )}
+          </div>
 
           {error && <p className="text-sm font-bold text-status-perdido">{error}</p>}
 
