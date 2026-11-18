@@ -25,7 +25,7 @@ import QrPlateModal from '../components/QrPlateModal'
 import AtencionFormModal from '../components/AtencionFormModal'
 import { useAuth } from '../hooks/useAuth'
 import { waLink } from '../lib/qr'
-import { isValidPhone, PHONE_ERROR } from '../lib/phone'
+import { isValidPhone, PHONE_ERROR, phoneDigits } from '../lib/phone'
 import {
   createVeterinaria,
   DEMO_MODE,
@@ -256,11 +256,14 @@ function VetRegister({ onSaved }) {
               type="tel"
               inputMode="tel"
               autoComplete="tel"
+              maxLength={20}
               value={whatsapp}
               onChange={(e) => {
                 setWhatsapp(e.target.value)
                 if (isValidPhone(e.target.value))
                   setErrors((prev) => ({ ...prev, whatsapp: undefined }))
+                else if (phoneDigits(e.target.value).length > 15)
+                  setErrors((prev) => ({ ...prev, whatsapp: PHONE_ERROR }))
               }}
               onBlur={handleWhatsappBlur}
               placeholder="Ej: 5492262000000"
@@ -423,11 +426,14 @@ function VetProfileModal({ onClose, onSaved, veterinaria }) {
               type="tel"
               inputMode="tel"
               autoComplete="tel"
+              maxLength={20}
               value={whatsapp}
               onChange={(e) => {
                 setWhatsapp(e.target.value)
                 if (isValidPhone(e.target.value))
                   setErrors((prev) => ({ ...prev, whatsapp: undefined }))
+                else if (phoneDigits(e.target.value).length > 15)
+                  setErrors((prev) => ({ ...prev, whatsapp: PHONE_ERROR }))
               }}
               onBlur={handleWhatsappBlur}
               placeholder="Ej: 5492262000000"

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { X, AlertTriangle, CheckCircle2, Camera, Loader2, MapPin, Navigation } from 'lucide-react'
 import { createReport, updateReport, uploadPetPhoto, DEMO_MODE } from '../lib/store'
-import { isValidPhone, PHONE_ERROR } from '../lib/phone'
+import { isValidPhone, PHONE_ERROR, phoneDigits } from '../lib/phone'
 import { useAuth } from '../hooks/useAuth'
 
 export default function ReportModal({ open, onClose, onCreated, editing = null, onSaved }) {
@@ -292,10 +292,13 @@ export default function ReportModal({ open, onClose, onCreated, editing = null, 
               }
               type="tel"
               autoComplete="tel"
+              maxLength={20}
               value={telefono}
               onChange={(e) => {
                 setTelefono(e.target.value)
                 if (isValidPhone(e.target.value)) setTelefonoError('')
+                else if (phoneDigits(e.target.value).length > 15)
+                  setTelefonoError(PHONE_ERROR)
               }}
               onBlur={() => {
                 if (telefono.trim() && !isValidPhone(telefono))

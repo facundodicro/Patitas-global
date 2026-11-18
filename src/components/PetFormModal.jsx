@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react'
 import { X, Camera, Loader2 } from 'lucide-react'
 import { createPet, updatePet, uploadPetPhoto } from '../lib/store'
-import { isValidPhone, PHONE_ERROR } from '../lib/phone'
+import { isValidPhone, PHONE_ERROR, phoneDigits } from '../lib/phone'
 
 export default function PetFormModal({ open, onClose, onSaved, pet, veterinariaId }) {
   const isEdit = !!pet
@@ -190,11 +190,14 @@ export default function PetFormModal({ open, onClose, onSaved, pet, veterinariaI
                 type="tel"
                 inputMode="tel"
                 autoComplete="tel"
+                maxLength={20}
                 value={duenoWhatsapp}
                 onChange={(e) => {
                   setDuenoWhatsapp(e.target.value)
                   if (!e.target.value.trim() || isValidPhone(e.target.value))
                     setWhatsappError('')
+                  else if (phoneDigits(e.target.value).length > 15)
+                    setWhatsappError(PHONE_ERROR)
                 }}
                 onBlur={() => {
                   if (duenoWhatsapp.trim() && !isValidPhone(duenoWhatsapp))

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Camera, Loader2, X } from 'lucide-react'
 import { updatePet, uploadPetPhoto } from '../lib/store'
-import { isValidPhone, PHONE_ERROR } from '../lib/phone'
+import { isValidPhone, PHONE_ERROR, phoneDigits } from '../lib/phone'
 
 const inputCls =
   'w-full rounded-xl border border-stone-200 bg-white px-4 py-2.5 text-sm text-stone-900 placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-brand/40 focus:border-brand transition'
@@ -222,11 +222,14 @@ export default function OwnerPetFormModal({ open, onClose, onSaved, pet }) {
                 type="tel"
                 inputMode="tel"
                 autoComplete="tel"
+                maxLength={20}
                 value={duenoWhatsapp}
                 onChange={(e) => {
                   setDuenoWhatsapp(e.target.value)
                   if (isValidPhone(e.target.value))
                     setErrors((prev) => ({ ...prev, whatsapp: undefined }))
+                  else if (phoneDigits(e.target.value).length > 15)
+                    setErrors((prev) => ({ ...prev, whatsapp: PHONE_ERROR }))
                 }}
                 onBlur={handleWhatsappBlur}
                 placeholder="Ej: 5492262000000"
